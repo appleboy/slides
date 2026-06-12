@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>appleboy / slides — 吳柏毅 演講投影片年鑑</title>
+  <meta name="description" content="吳柏毅（appleboy）歷年研討會演講與工作坊投影片整理 — Conference talks &amp; workshop decks by Bo-Yi Wu.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,900;1,9..144,300;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper:      #f7f3ea;
+      --paper-deep: #efe9db;
+      --ink:        #1c1a16;
+      --ink-soft:   #57514a;
+      --ink-faint:  #8d857a;
+      --rule:       #d8d0c0;
+      --vermilion:  #d8431f;
+      --teal:       #1a6b66;
+      --serif-tc:   'Noto Serif TC', 'Fraunces', serif;
+      --serif-en:   'Fraunces', 'Noto Serif TC', serif;
+      --mono:       'IBM Plex Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    ::selection { background: var(--vermilion); color: var(--paper); }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif-en);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* paper grain */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .sheet {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 36px 72px;
+    }
+
+    /* ── MASTHEAD ── */
+    .masthead {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 26px 0 14px;
+      border-bottom: 3px solid var(--ink);
+      opacity: 0;
+      animation: rise 0.7s cubic-bezier(0.22,1,0.36,1) 0.05s forwards;
+    }
+
+    .masthead-brand {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    .masthead-brand em {
+      font-style: normal;
+      color: var(--vermilion);
+    }
+
+    .masthead-meta {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+    }
+
+    .masthead-meta b { color: var(--ink); font-weight: 600; }
+
+    .masthead-rule {
+      border-bottom: 1px solid var(--ink);
+      margin-top: 3px;
+      margin-bottom: 56px;
+      opacity: 0;
+      animation: rise 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s forwards;
+    }
+
+    /* ── NAMEPLATE ── */
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--vermilion);
+      margin-bottom: 26px;
+      opacity: 0;
+      animation: rise 0.7s cubic-bezier(0.22,1,0.36,1) 0.18s forwards;
+    }
+
+    .kicker::before {
+      content: '';
+      width: 40px;
+      height: 2px;
+      background: var(--vermilion);
+    }
+
+    .nameplate {
+      position: relative;
+      margin-bottom: 34px;
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) 0.26s forwards;
+    }
+
+    .nameplate-en {
+      font-family: var(--serif-en);
+      font-weight: 900;
+      font-size: clamp(38px, 11.5vw, 148px);
+      line-height: 0.94;
+      letter-spacing: -0.025em;
+      text-transform: uppercase;
+    }
+
+    .nameplate-en .hollow {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--ink);
+    }
+
+    .nameplate-zh {
+      position: absolute;
+      right: clamp(0px, 4vw, 40px);
+      bottom: -0.32em;
+      font-family: var(--serif-tc);
+      font-weight: 900;
+      font-size: clamp(15px, 3.4vw, 34px);
+      letter-spacing: 0.5em;
+      color: var(--paper);
+      background: var(--vermilion);
+      padding: 8px 6px 8px 24px;
+      transform: rotate(-1.6deg);
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+
+    .standfirst {
+      font-family: var(--serif-en);
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(15px, 2vw, 19px);
+      line-height: 1.75;
+      color: var(--ink-soft);
+      max-width: 58ch;
+      margin-top: 44px;
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) 0.34s forwards;
+    }
+
+    .standfirst b {
+      font-style: normal;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    /* ── COLOPHON ── */
+    .colophon {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin: 56px 0 84px;
+      padding: 26px 0;
+      border-top: 1px solid var(--ink);
+      border-bottom: 1px solid var(--ink);
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) 0.42s forwards;
+    }
+
+    @media (max-width: 640px) {
+      .colophon { grid-template-columns: repeat(2, 1fr); row-gap: 28px; }
+    }
+
+    .colophon-item {
+      padding: 0 20px;
+      border-left: 1px solid var(--rule);
+    }
+
+    .colophon-item:first-child { padding-left: 0; border-left: 0; }
+
+    @media (max-width: 640px) {
+      .colophon-item:nth-child(3) { padding-left: 0; border-left: 0; }
+    }
+
+    .colophon-key {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 10px;
+    }
+
+    .colophon-val {
+      font-family: var(--serif-en);
+      font-weight: 600;
+      font-size: 17px;
+      line-height: 1.4;
+    }
+
+    .colophon-val a {
+      color: var(--teal);
+      text-decoration: none;
+      border-bottom: 1px solid var(--teal);
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .colophon-val a:hover {
+      color: var(--vermilion);
+      border-color: var(--vermilion);
+    }
+
+    /* ── VOLUME HEAD ── */
+    .volume-head {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      margin-bottom: 8px;
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) 0.5s forwards;
+    }
+
+    .volume-year {
+      font-family: var(--serif-en);
+      font-weight: 900;
+      font-size: clamp(40px, 6vw, 58px);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .volume-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+
+    .volume-line {
+      flex: 1;
+      height: 1px;
+      background: var(--ink);
+      position: relative;
+    }
+
+    .volume-line::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: -3px;
+      width: 7px;
+      height: 7px;
+      background: var(--ink);
+      transform: rotate(45deg);
+    }
+
+    .volume-event {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) 0.55s forwards;
+    }
+
+    .volume-event b { color: var(--vermilion); font-weight: 600; }
+
+    /* ── ENTRIES ── */
+    .entries {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      margin-bottom: 84px;
+    }
+
+    .entry {
+      position: relative;
+      display: grid;
+      grid-template-columns: 84px 1fr auto;
+      gap: 26px;
+      padding: 32px 30px 30px;
+      background: var(--paper);
+      border: 1.5px solid var(--ink);
+      box-shadow: 6px 6px 0 var(--paper-deep), 6px 6px 0 1.5px var(--ink);
+      text-decoration: none;
+      color: var(--ink);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    .entry:nth-child(1) { animation-delay: 0.62s; }
+    .entry:nth-child(2) { animation-delay: 0.7s; }
+
+    a.entry:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 10px 10px 0 var(--paper-deep), 10px 10px 0 1.5px var(--ink);
+    }
+
+    a.entry:active {
+      transform: translate(2px, 2px);
+      box-shadow: 3px 3px 0 var(--paper-deep), 3px 3px 0 1.5px var(--ink);
+    }
+
+    @media (max-width: 720px) {
+      .entry { grid-template-columns: 1fr; gap: 18px; }
+    }
+
+    .entry-index {
+      font-family: var(--serif-en);
+      font-weight: 900;
+      font-size: 46px;
+      line-height: 1;
+      color: transparent;
+      -webkit-text-stroke: 1.5px var(--ink-faint);
+      transition: -webkit-text-stroke-color 0.2s;
+    }
+
+    a.entry:hover .entry-index { -webkit-text-stroke-color: var(--vermilion); }
+
+    .entry-tag {
+      position: absolute;
+      top: -12px;
+      left: 22px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      color: var(--paper);
+    }
+
+    .entry.talk     .entry-tag { background: var(--vermilion); }
+    .entry.workshop .entry-tag { background: var(--teal); }
+
+    .entry-date {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .entry-date b { color: var(--ink); font-weight: 600; }
+
+    .entry-title {
+      font-family: var(--serif-tc);
+      font-weight: 900;
+      font-size: clamp(18px, 2.6vw, 23px);
+      line-height: 1.45;
+      margin-bottom: 10px;
+    }
+
+    .entry-sub {
+      font-family: var(--serif-en);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: var(--ink-soft);
+      max-width: 52ch;
+    }
+
+    .entry-side {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      text-align: right;
+    }
+
+    @media (max-width: 720px) {
+      .entry-side { flex-direction: row; align-items: center; text-align: left; }
+    }
+
+    .entry-meta {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.08em;
+      line-height: 1.9;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+    }
+
+    .entry-cta {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .entry.talk     .entry-cta { color: var(--vermilion); }
+    .entry.workshop .entry-cta { color: var(--teal); }
+
+    .entry-cta::after {
+      content: '⟶';
+      transition: transform 0.2s;
+    }
+
+    a.entry:hover .entry-cta::after { transform: translateX(5px); }
+
+    /* in-preparation stamp */
+    .entry-stamp {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--teal);
+      border: 1.5px solid var(--teal);
+      padding: 5px 12px;
+      transform: rotate(-2deg);
+      white-space: nowrap;
+    }
+
+    /* ── BYLINE ── */
+    .byline {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      padding: 26px 0;
+      border-top: 3px double var(--ink);
+      border-bottom: 1px solid var(--rule);
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) 0.78s forwards;
+    }
+
+    .byline-mark {
+      width: 58px;
+      height: 58px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 1.5px solid var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      background: var(--paper-deep);
+    }
+
+    .byline-name {
+      font-family: var(--serif-tc);
+      font-weight: 900;
+      font-size: 19px;
+    }
+
+    .byline-name span {
+      font-family: var(--serif-en);
+      font-weight: 600;
+      font-style: italic;
+      color: var(--vermilion);
+    }
+
+    .byline-role {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--ink-soft);
+      margin-top: 5px;
+    }
+
+    .byline-role b { color: var(--teal); font-weight: 600; }
+
+    /* ── FOOTER ── */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-top: 22px;
+      opacity: 0;
+      animation: rise 0.8s cubic-bezier(0.22,1,0.36,1) 0.86s forwards;
+    }
+
+    .footer-tags {
+      font-family: var(--mono);
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
+      color: var(--ink-faint);
+      text-transform: uppercase;
+    }
+
+    .footer-tags em {
+      font-style: normal;
+      color: var(--vermilion);
+    }
+
+    .footer-link {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1.5px solid var(--vermilion);
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover { color: var(--vermilion); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0s !important; }
+    }
+  </style>
+</head>
+<body>
+<div class="sheet">
+
+  <!-- masthead -->
+  <header class="masthead">
+    <div class="masthead-brand">appleboy <em>/</em> slides</div>
+    <div class="masthead-meta">An Annal of <b>Talks &amp; Workshops</b></div>
+  </header>
+  <div class="masthead-rule"></div>
+
+  <!-- nameplate -->
+  <section>
+    <p class="kicker">吳柏毅 · Bo-Yi Wu</p>
+    <div class="nameplate">
+      <div class="nameplate-en">The <span class="hollow">Slides</span><br>Gazette</div>
+      <div class="nameplate-zh">投影片年鑑</div>
+    </div>
+    <p class="standfirst">
+      歷年研討會演講與工作坊的投影片檔案庫——關於 <b>DevOps</b>、<b>AI Agent</b> 與
+      <b>自動化流程</b> 的實戰紀錄。每一份講稿，都是一次踩坑之後的整理。
+    </p>
+  </section>
+
+  <!-- colophon -->
+  <div class="colophon">
+    <div class="colophon-item">
+      <div class="colophon-key">Sessions</div>
+      <div class="colophon-val">2 場</div>
+    </div>
+    <div class="colophon-item">
+      <div class="colophon-key">Latest Volume</div>
+      <div class="colophon-val">2026</div>
+    </div>
+    <div class="colophon-item">
+      <div class="colophon-key">Beat</div>
+      <div class="colophon-val">Agentic DevOps</div>
+    </div>
+    <div class="colophon-item">
+      <div class="colophon-key">Source</div>
+      <div class="colophon-val">
+        <a href="https://github.com/appleboy/slides" target="_blank" rel="noopener">GitHub ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- volume 2026 -->
+  <div class="volume-head">
+    <span class="volume-year">2026</span>
+    <span class="volume-label">Vol. I</span>
+    <div class="volume-line"></div>
+  </div>
+  <p class="volume-event"><b>DevOpsDays Taipei 2026</b> · 06.26（五）· 台北</p>
+
+  <div class="entries">
+
+    <a class="entry workshop" href="https://github.com/appleboy/slides/tree/main/2026/0626-devopsdays-workshop" target="_blank" rel="noopener">
+      <span class="entry-tag">Workshop · 90 min</span>
+      <div class="entry-index">01</div>
+      <div>
+        <div class="entry-date"><b>06.26</b> · 09:30 – 11:00 · 607+608 室</div>
+        <div class="entry-title">從開發到部署全都交給 AI：實作 AI 驅動的自動化流程</div>
+        <div class="entry-sub">
+          Hands-on: a near-fully-automated pipeline from code generation to
+          deployment — developers intervene at just two checkpoints.
+        </div>
+      </div>
+      <div class="entry-side">
+        <div class="entry-meta">Session #4706<br>通識 · 中文</div>
+        <span class="entry-stamp">Deck 籌備中</span>
+        <span class="entry-cta">Read Brief</span>
+      </div>
+    </a>
+
+    <a class="entry talk" href="2026/0626-devopsdays-talk/">
+      <span class="entry-tag">Talk · 40 min</span>
+      <div class="entry-index">02</div>
+      <div>
+        <div class="entry-date"><b>06.26</b> · 13:30 – 14:10 · ABC 會議室</div>
+        <div class="entry-title">AI 不只幫你寫 Code：當專案從 300 暴增到 1500，我們如何撐住 DevOps</div>
+        <div class="entry-sub">
+          AI Does More Than Write Code — PR quality gates, team onboarding,
+          and a GitOps pipeline that survived a 5× project explosion.
+        </div>
+      </div>
+      <div class="entry-side">
+        <div class="entry-meta">Session #4709<br>通識 · 中文 / EN</div>
+        <span class="entry-cta">Open Deck</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- byline -->
+  <div class="byline">
+    <div class="byline-mark">🍎</div>
+    <div>
+      <div class="byline-name">吳柏毅 <span>appleboy</span></div>
+      <div class="byline-role">Technology Platform Service Engineer · <b>MediaTek</b></div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <footer class="footer">
+    <div class="footer-tags"><em>#</em>Agentic-DevOps <em>#</em>AI-powered-DevOps <em>#</em>GitOps</div>
+    <a class="footer-link" href="https://github.com/appleboy" target="_blank" rel="noopener">github.com/appleboy ↗</a>
+  </footer>
+
+</div>
+</body>
+</html>
