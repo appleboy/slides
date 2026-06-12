@@ -2,6 +2,8 @@
 
 吳柏毅（appleboy）歷年演講投影片整理。
 
+🌐 線上瀏覽：<https://appleboy.github.io/slides/>
+
 ## 2026
 
 | 日期 | 活動 | 類型 | 標題 |
