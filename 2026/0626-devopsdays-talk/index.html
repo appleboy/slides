@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevOpsDays Taipei 2026 — appleboy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0a0c0f;
+      --surface:   #0f1318;
+      --border:    #1e2530;
+      --green:     #39ff8a;
+      --green-dim: #1a6e40;
+      --cyan:      #00d4ff;
+      --amber:     #ffb830;
+      --muted:     #4a5568;
+      --text:      #c8d6e5;
+      --text-dim:  #6b7a8d;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    /* scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.06) 2px,
+        rgba(0,0,0,0.06) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* grid background */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(57,255,138,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(57,255,138,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 60px 32px 80px;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 64px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.1s forwards;
+    }
+
+    .topbar-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: pulse 2s infinite;
+    }
+
+    .topbar-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--green);
+      text-transform: uppercase;
+    }
+
+    .topbar-sep {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--green-dim), transparent);
+    }
+
+    .topbar-event {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      margin-bottom: 56px;
+    }
+
+    .prompt-line {
+      font-size: 12px;
+      color: var(--green);
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.2s forwards;
+    }
+
+    .prompt-line::before { content: '$ '; color: var(--muted); }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(26px, 5vw, 42px);
+      line-height: 1.15;
+      color: #fff;
+      margin-bottom: 14px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.3s forwards;
+    }
+
+    h1 .accent { color: var(--green); }
+    h1 .number {
+      color: var(--amber);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 600px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.4s forwards;
+    }
+
+    /* ── META GRID ── */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      margin-bottom: 56px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.5s forwards;
+    }
+
+    .meta-item {
+      background: var(--surface);
+      padding: 16px 20px;
+    }
+
+    .meta-key {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .meta-val {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .meta-val a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    .meta-val a:hover { text-decoration: underline; }
+
+    /* ── SLIDES SECTION ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.6s forwards;
+    }
+
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .slides-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.7s forwards;
+    }
+
+    @media (max-width: 500px) {
+      .slides-grid { grid-template-columns: 1fr; }
+    }
+
+    .slide-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.2s;
+      overflow: hidden;
+    }
+
+    .slide-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .slide-card.zh::before {
+      background: linear-gradient(135deg, rgba(57,255,138,0.05), transparent 60%);
+    }
+
+    .slide-card.en::before {
+      background: linear-gradient(135deg, rgba(0,212,255,0.05), transparent 60%);
+    }
+
+    .slide-card:hover {
+      border-color: var(--green);
+      transform: translateY(-2px);
+    }
+
+    .slide-card.en:hover { border-color: var(--cyan); }
+
+    .slide-card:hover::before { opacity: 1; }
+
+    .slide-card.unavailable {
+      opacity: 0.45;
+      pointer-events: none;
+      cursor: not-allowed;
+    }
+
+    .slide-lang {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .slide-lang .tag {
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    .slide-card.zh .tag {
+      background: rgba(57,255,138,0.12);
+      color: var(--green);
+      border: 1px solid var(--green-dim);
+    }
+
+    .slide-card.en .tag {
+      background: rgba(0,212,255,0.10);
+      color: var(--cyan);
+      border: 1px solid rgba(0,212,255,0.3);
+    }
+
+    .slide-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: #fff;
+      line-height: 1.4;
+    }
+
+    .slide-desc {
+      font-size: 11px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .slide-arrow {
+      margin-top: auto;
+      font-size: 18px;
+      color: var(--green);
+      transition: transform 0.2s;
+    }
+
+    .slide-card.en .slide-arrow { color: var(--cyan); }
+    .slide-card:hover .slide-arrow { transform: translateX(4px); }
+
+    .badge-soon {
+      position: absolute;
+      top: 16px; right: 16px;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: rgba(255,184,48,0.1);
+      border: 1px solid rgba(255,184,48,0.3);
+      color: var(--amber);
+    }
+
+    /* ── SPEAKER ── */
+    .speaker-block {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-top: 48px;
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--green);
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.8s forwards;
+    }
+
+    .speaker-avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--green-dim), #0a2e1a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      border: 1px solid var(--green-dim);
+    }
+
+    .speaker-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: #fff;
+    }
+
+    .speaker-role {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
+    .speaker-role span { color: var(--green); }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      opacity: 0;
+      animation: fadeUp 0.5s ease 0.9s forwards;
+    }
+
+    .footer-left {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .footer-left span { color: var(--green); }
+
+    .footer-link {
+      font-size: 11px;
+      color: var(--cyan);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover { color: #fff; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
+      50%       { opacity: 0.5; box-shadow: 0 0 4px var(--green); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="topbar-dot"></div>
+    <span class="topbar-label">Session 4709</span>
+    <div class="topbar-sep"></div>
+    <span class="topbar-event">DevOpsDays Taipei 2026</span>
+  </div>
+
+  <!-- header -->
+  <header class="header">
+    <div class="prompt-line">cat session-info.json | jq '.title'</div>
+    <h1>
+      <span class="accent">AI</span> 不只幫你寫 Code<br>
+      當專案從 <span class="number">300</span> 暴增到 <span class="number">1500</span><br>
+      我們如何撐住 DevOps
+    </h1>
+    <p class="subtitle">
+      AI Does More Than Write Code: How We Kept DevOps Alive<br>
+      When Projects Exploded from 300 to 1500
+    </p>
+  </header>
+
+  <!-- meta -->
+  <div class="meta-grid">
+    <div class="meta-item">
+      <div class="meta-key">Date</div>
+      <div class="meta-val">2026-06-26</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-key">Time</div>
+      <div class="meta-val">13:30 – 14:10</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-key">Location</div>
+      <div class="meta-val">ABC 會議室</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-key">Session</div>
+      <div class="meta-val">
+        <a href="https://devopsdays.tw/2026/session/4709" target="_blank" rel="noopener">#4709 ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- slides -->
+  <div class="section-header">
+    <span class="section-label">Slides</span>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="slides-grid">
+    <a class="slide-card zh" href="slides-zh.html">
+      <div class="slide-lang"><span class="tag">ZH</span> 中文版</div>
+      <div class="slide-title">中文投影片</div>
+      <div class="slide-desc">完整演講內容，繁體中文呈現</div>
+      <div class="slide-arrow">→</div>
+    </a>
+
+    <div class="slide-card en unavailable">
+      <div class="badge-soon">Coming Soon</div>
+      <div class="slide-lang"><span class="tag">EN</span> English</div>
+      <div class="slide-title">English Slides</div>
+      <div class="slide-desc">Full talk in English — coming soon</div>
+      <div class="slide-arrow">→</div>
+    </div>
+  </div>
+
+  <!-- speaker -->
+  <div class="speaker-block">
+    <div class="speaker-avatar">🍎</div>
+    <div>
+      <div class="speaker-name">吳柏毅 — appleboy</div>
+      <div class="speaker-role">Technology Platform Service Engineer · <span>MediaTek</span></div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span>DevOpsDays Taipei 2026</span> · Agentic DevOps / AI-powered DevOps
+    </div>
+    <a class="footer-link" href="https://devopsdays.tw/2026/session/4709" target="_blank" rel="noopener">
+      devopsdays.tw ↗
+    </a>
+  </footer>
+
+</div>
+</body>
+</html>
