@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Driven DevOps Workshop — DevOpsDays Taipei 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Sans+TC:wght@300;400;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #050608;
+      --white: #f0ede8;
+      --acid: #b6f542;
+      --dim: #1a1d22;
+      --border: rgba(182,245,66,0.25);
+      --muted: #4a5060;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 12px; height: 12px;
+      background: var(--acid);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s ease, width 0.2s ease, height 0.2s ease;
+      mix-blend-mode: exclusion;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid var(--acid);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.18s ease, width 0.2s ease, height 0.2s ease;
+      opacity: 0.6;
+    }
+    body:hover .cursor { opacity: 1; }
+
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.35;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .header-grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 80px 80px;
+      opacity: 0.4;
+    }
+
+    .header-scan-line {
+      position: absolute;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--acid), transparent);
+      animation: scan 6s linear infinite;
+      opacity: 0.3;
+    }
+
+    @keyframes scan {
+      0% { top: -2px; }
+      100% { top: 100%; }
+    }
+
+    nav {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 28px 48px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      color: var(--acid);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .nav-meta {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .hero {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 48px;
+      gap: 32px;
+    }
+
+    .hero-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--acid);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      opacity: 0;
+      animation: fadeUp 0.8s ease 0.2s forwards;
+    }
+
+    .hero-tag::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 1px;
+      background: var(--acid);
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(64px, 10vw, 140px);
+      line-height: 0.88;
+      letter-spacing: -0.01em;
+      color: var(--white);
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.4s forwards;
+    }
+
+    .hero-title .accent {
+      color: var(--acid);
+      display: block;
+    }
+
+    .hero-title .stroke {
+      -webkit-text-stroke: 1px var(--white);
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 300;
+      font-size: clamp(14px, 1.4vw, 18px);
+      color: rgba(240,237,232,0.55);
+      max-width: 560px;
+      line-height: 1.7;
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.6s forwards;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.8s forwards;
+    }
+
+    .btn {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 14px 32px;
+      border: 1px solid;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      cursor: none;
+    }
+
+    .btn-primary {
+      background: var(--acid);
+      color: var(--black);
+      border-color: var(--acid);
+    }
+
+    .btn-primary:hover {
+      background: transparent;
+      color: var(--acid);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--white);
+      border-color: rgba(240,237,232,0.3);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--white);
+    }
+
+    .btn svg {
+      width: 14px; height: 14px;
+      flex-shrink: 0;
+    }
+
+    .hero-footer {
+      position: relative;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--border);
+      opacity: 0;
+      animation: fadeUp 0.9s ease 1s forwards;
+    }
+
+    .hero-stat {
+      padding: 24px 48px;
+      border-right: 1px solid var(--border);
+    }
+
+    .hero-stat:last-child { border-right: none; }
+
+    .stat-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--acid);
+      letter-spacing: 0.05em;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── AGENDA SECTION ── */
+    section {
+      padding: 120px 48px;
+      position: relative;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 24px;
+      margin-bottom: 64px;
+    }
+
+    .section-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--acid);
+      letter-spacing: 0.2em;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(36px, 5vw, 64px);
+      letter-spacing: 0.02em;
+      color: var(--white);
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+      margin-left: 16px;
+    }
+
+    /* Agenda blocks */
+    .agenda-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .agenda-block {
+      background: var(--black);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+
+    .agenda-block:hover {
+      background: var(--dim);
+    }
+
+    .agenda-block::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 2px;
+      background: var(--acid);
+      transition: width 0.4s ease;
+    }
+
+    .agenda-block:hover::after { width: 100%; }
+
+    .agenda-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--acid);
+      letter-spacing: 0.15em;
+      margin-bottom: 16px;
+    }
+
+    .agenda-block-title {
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 700;
+      font-size: 20px;
+      color: var(--white);
+      margin-bottom: 20px;
+      line-height: 1.35;
+    }
+
+    .agenda-items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .agenda-items li {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.5;
+    }
+
+    .agenda-items li::before {
+      content: '›';
+      color: var(--acid);
+      flex-shrink: 0;
+    }
+
+    /* ── SLIDES SECTION ── */
+    .slides-section {
+      background: var(--dim);
+      padding: 120px 48px;
+    }
+
+    .slides-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 64px;
+    }
+
+    .slide-card {
+      position: relative;
+      text-decoration: none;
+      display: block;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.3s ease;
+      cursor: none;
+    }
+
+    .slide-card:hover {
+      border-color: var(--acid);
+    }
+
+    .slide-card-preview {
+      aspect-ratio: 16 / 9;
+      background: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide-card-preview-en {
+      background: #010409;
+    }
+
+    .slide-card-preview-zh {
+      background: #060309;
+    }
+
+    .preview-terminal {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(20px, 3vw, 38px);
+      font-weight: 700;
+      color: #39d353;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-shadow: 0 0 40px rgba(57,211,83,0.5);
+    }
+
+    .preview-terminal .blink {
+      animation: blink 1.1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .preview-kanji {
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 900;
+      font-size: clamp(24px, 3.5vw, 48px);
+      color: var(--white);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      text-align: center;
+      padding: 24px;
+      text-shadow: 0 0 60px rgba(182,245,66,0.3);
+    }
+
+    .preview-kanji span {
+      color: var(--acid);
+    }
+
+    .preview-corner {
+      position: absolute;
+      top: 12px; right: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .slide-hover-arrow {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(182,245,66,0.08);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .slide-hover-arrow svg {
+      width: 48px; height: 48px;
+      color: var(--acid);
+    }
+
+    .slide-card:hover .slide-hover-arrow { opacity: 1; }
+
+    .slide-card-info {
+      padding: 28px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid var(--border);
+    }
+
+    .slide-card-lang {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .lang-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--acid);
+    }
+
+    .slide-card-name {
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--white);
+    }
+
+    .slide-open-icon {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .slide-card:hover .slide-open-icon {
+      background: var(--acid);
+      border-color: var(--acid);
+      color: var(--black);
+    }
+
+    .slide-open-icon svg {
+      width: 14px; height: 14px;
+    }
+
+    /* ── TOPICS SECTION ── */
+    .topics-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .topic-row {
+      display: grid;
+      grid-template-columns: 60px 1fr auto;
+      align-items: center;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 32px;
+      transition: padding-left 0.3s ease;
+    }
+
+    .topic-row:hover {
+      padding-left: 16px;
+    }
+
+    .topic-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .topic-name {
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 700;
+      font-size: clamp(16px, 1.6vw, 22px);
+      color: var(--white);
+      line-height: 1.3;
+    }
+
+    .topic-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--black);
+      background: var(--acid);
+      padding: 4px 12px;
+      white-space: nowrap;
+    }
+
+    /* ── SPEAKER SECTION ── */
+    .speaker-section {
+      background: var(--dim);
+    }
+
+    .speaker-card {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+    }
+
+    .speaker-left {
+      padding: 56px;
+      border-right: 1px solid var(--border);
+    }
+
+    .speaker-avatar {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: var(--border);
+      border: 2px solid var(--acid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--acid);
+      margin-bottom: 28px;
+      overflow: hidden;
+    }
+
+    .speaker-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .speaker-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      color: var(--white);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .speaker-handle {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--acid);
+      letter-spacing: 0.1em;
+      margin-bottom: 24px;
+    }
+
+    .speaker-role {
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 300;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .speaker-right {
+      padding: 56px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .speaker-req-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--acid);
+      margin-bottom: 20px;
+    }
+
+    .req-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .req-list li {
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 300;
+      font-size: 15px;
+      color: rgba(240,237,232,0.7);
+      line-height: 1.5;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .req-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--acid);
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+
+    .tags-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border: 1px solid var(--acid);
+      color: var(--acid);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 48px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .footer-link {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover { color: var(--acid); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      nav { padding: 20px 24px; }
+      .hero { padding: 0 24px; }
+      section { padding: 80px 24px; }
+      .slides-section { padding: 80px 24px; }
+      .hero-footer { grid-template-columns: repeat(2, 1fr); }
+      .hero-stat { padding: 20px 24px; }
+      .agenda-grid { grid-template-columns: 1fr; }
+      .slides-grid { grid-template-columns: 1fr; }
+      .speaker-card { grid-template-columns: 1fr; }
+      .speaker-left { border-right: none; border-bottom: 1px solid var(--border); }
+      footer { flex-direction: column; gap: 16px; text-align: center; }
+    }
+
+    /* Scroll reveal */
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="header-grid-bg"></div>
+    <div class="header-scan-line"></div>
+
+    <nav>
+      <div class="nav-logo">DevOpsDays Taipei 2026</div>
+      <div class="nav-meta">2026 / 06 / 26 &nbsp;·&nbsp; 607+608 室 &nbsp;·&nbsp; 09:30–11:00</div>
+    </nav>
+
+    <div class="hero">
+      <div class="hero-tag">Workshop &nbsp;·&nbsp; 90 min &nbsp;·&nbsp; Hands-on</div>
+      <h1 class="hero-title">
+        AI-Driven
+        <span class="accent">DevOps</span>
+        <span class="stroke">Workshop</span>
+      </h1>
+      <p class="hero-subtitle">從開發到部署全都交給 AI——展示一個近乎全自動的流程，開發者僅需介入兩個關鍵點：初始方向設定與最終核准。</p>
+      <div class="hero-cta">
+        <a href="workshop-zh.html" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          中文投影片
+        </a>
+        <a href="workshop-en.html" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          English Slides
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-footer">
+      <div class="hero-stat">
+        <div class="stat-label">Date</div>
+        <div class="stat-value">2026.06.26</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-label">Duration</div>
+        <div class="stat-value">90 MIN</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-label">Level</div>
+        <div class="stat-value">General</div>
+      </div>
+      <div class="hero-stat">
+        <div class="stat-label">Room</div>
+        <div class="stat-value">607+608</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── AGENDA ── -->
+  <section>
+    <div class="section-header reveal">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Agenda</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="agenda-grid reveal">
+      <div class="agenda-block">
+        <div class="agenda-time">00:00 – 00:20</div>
+        <h3 class="agenda-block-title">完整流程示範<br><small style="font-size:14px;font-weight:300;color:var(--muted);">Full Workflow Demo</small></h3>
+        <ul class="agenda-items">
+          <li>自動程式碼生成</li>
+          <li>PR 建立</li>
+          <li>AI 程式碼審查</li>
+          <li>自我修正</li>
+          <li>CI/CD 錯誤診斷</li>
+        </ul>
+      </div>
+      <div class="agenda-block">
+        <div class="agenda-time">00:20 – 01:20</div>
+        <h3 class="agenda-block-title">動手實作<br><small style="font-size:14px;font-weight:300;color:var(--muted);">Hands-on Lab</small></h3>
+        <ul class="agenda-items">
+          <li>計畫生成與迭代精煉</li>
+          <li>AI 實作程式碼</li>
+          <li>程式碼優化</li>
+          <li>安全掃描</li>
+          <li>PR 提交 &amp; 審查</li>
+          <li>自動化 Pipeline 修復</li>
+        </ul>
+      </div>
+      <div class="agenda-block">
+        <div class="agenda-time">01:20 – 01:30</div>
+        <h3 class="agenda-block-title">討論<br><small style="font-size:14px;font-weight:300;color:var(--muted);">Discussion</small></h3>
+        <ul class="agenda-items">
+          <li>針對不同團隊規模調整工作流程</li>
+          <li>工具鏈整合</li>
+          <li>透過自訂 AI Agent Skills 擴展覆蓋範圍</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SLIDES ── -->
+  <section class="slides-section">
+    <div class="section-header reveal">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Slides</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="slides-grid reveal">
+      <a href="workshop-zh.html" class="slide-card">
+        <div class="slide-card-preview slide-card-preview-zh">
+          <div class="preview-kanji">AI 驅動的<br><span>自動化</span><br>DevOps</div>
+          <div class="preview-corner">ZH-TW</div>
+          <div class="slide-hover-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="slide-card-info">
+          <div class="slide-card-lang">
+            <span class="lang-tag">繁體中文</span>
+            <span class="slide-card-name">中文投影片</span>
+          </div>
+          <div class="slide-open-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+      </a>
+
+      <a href="workshop-en.html" class="slide-card">
+        <div class="slide-card-preview slide-card-preview-en">
+          <div class="preview-terminal">&gt;_ <span class="blink">█</span></div>
+          <div class="preview-corner">EN</div>
+          <div class="slide-hover-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+        <div class="slide-card-info">
+          <div class="slide-card-lang">
+            <span class="lang-tag">English</span>
+            <span class="slide-card-name">English Slides</span>
+          </div>
+          <div class="slide-open-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── TOPICS ── -->
+  <section>
+    <div class="section-header reveal">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Core Topics</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="topics-list reveal">
+      <div class="topic-row">
+        <span class="topic-num">01</span>
+        <span class="topic-name">AI 生成執行計畫與迭代精煉</span>
+        <span class="topic-tag">Planning</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">02</span>
+        <span class="topic-name">自動化程式碼重構與安全掃描</span>
+        <span class="topic-tag">Code Quality</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">03</span>
+        <span class="topic-name">AI 驅動的 PR 建立與程式碼審查循環</span>
+        <span class="topic-tag">Review</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">04</span>
+        <span class="topic-name">自我修復 CI/CD Pipeline</span>
+        <span class="topic-tag">CI/CD</span>
+      </div>
+      <div class="topic-row">
+        <span class="topic-num">05</span>
+        <span class="topic-name">自訂 AI Agent Skills 擴展自動化範圍</span>
+        <span class="topic-tag">Agent</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SPEAKER ── -->
+  <section class="speaker-section">
+    <div class="section-header reveal">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Speaker</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="speaker-card reveal">
+      <div class="speaker-left">
+        <div class="speaker-avatar">AB</div>
+        <div class="speaker-name">吳柏毅</div>
+        <div class="speaker-handle">@appleboy</div>
+        <div class="speaker-role">Technology Platform Service Engineer<br>DevOps / Open Source / Go 愛好者</div>
+      </div>
+      <div class="speaker-right">
+        <div>
+          <div class="speaker-req-title">前置需求</div>
+          <ul class="req-list">
+            <li><span class="req-dot"></span>自備筆電</li>
+            <li><span class="req-dot"></span>任意 AI 工具帳號（Claude Code、Cursor、GitHub Copilot 或類似工具）</li>
+            <li><span class="req-dot"></span>基本 Git 操作能力與 CI/CD 概念理解</li>
+          </ul>
+        </div>
+        <div>
+          <div class="speaker-req-title">Tags</div>
+          <div class="tags-row">
+            <span class="badge">Agentic DevOps</span>
+            <span class="badge">AI-powered DevOps</span>
+          </div>
+        </div>
+        <div>
+          <div class="speaker-req-title">Session</div>
+          <a href="https://devopsdays.tw/2026/session/4706" class="footer-link" style="font-size:12px;">devopsdays.tw/2026/session/4706</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="footer-logo">DevOpsDays Taipei 2026 · AI-Driven DevOps Workshop</div>
+    <a href="https://devopsdays.tw/2026/session/4706" class="footer-link">devopsdays.tw/2026/session/4706</a>
+  </footer>
+
+  <script>
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px';
+      cursor.style.top = my + 'px';
+    });
+
+    (function animRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top = ry + 'px';
+      requestAnimationFrame(animRing);
+    })();
+
+    document.querySelectorAll('a, .btn, .slide-card').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursor.style.width = '20px';
+        cursor.style.height = '20px';
+        ring.style.width = '56px';
+        ring.style.height = '56px';
+      });
+      el.addEventListener('mouseleave', () => {
+        cursor.style.width = '12px';
+        cursor.style.height = '12px';
+        ring.style.width = '36px';
+        ring.style.height = '36px';
+      });
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -48px 0px' });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
