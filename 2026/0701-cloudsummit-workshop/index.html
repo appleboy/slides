@@ -531,9 +531,15 @@
     }
 
     /* ── SLIDES ── */
-    .slide-card {
+    .slides-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+    }
+
+    .slide-card {
+      display: flex;
+      flex-direction: column;
       text-decoration: none;
       border: 1px solid var(--line);
       border-radius: 4px;
@@ -549,7 +555,7 @@
 
     .slide-preview {
       background: var(--ink);
-      aspect-ratio: 16 / 8;
+      aspect-ratio: 16 / 9;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -607,11 +613,11 @@
     }
 
     .slide-info {
-      padding: 40px;
+      padding: 28px 32px;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .slide-lang {
@@ -818,8 +824,7 @@
       .meta-cell:nth-child(2) { border-right: none; }
       .meta-cell:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
       .pillars { grid-template-columns: 1fr; }
-      .slide-card { grid-template-columns: 1fr; }
-      .slide-preview { aspect-ratio: 16 / 9; }
+      .slides-grid { grid-template-columns: 1fr; }
       .speaker { grid-template-columns: 1fr; }
       .speaker-left { border-right: none; border-bottom: 1px solid var(--line); }
       .sec { padding-top: 72px; }
@@ -853,7 +858,11 @@
       <p class="hero-desc">核心是兩大支柱：以 Agent Skill 擴充 AI 的專屬能力，並透過 MCP 讓 AI 串接外部工具與資料來源。從零開始，逐步組裝出一條可重複使用、貼合自身工作情境的自動化流程。</p>
       <div class="hero-cta">
         <a href="workshop-zh.html" class="btn btn-primary">
-          開啟投影片
+          中文投影片
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="workshop-en.html" class="btn btn-ghost">
+          English Slides
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
         <a href="https://cloudsummit.ithome.com.tw/2026/speaker/69" class="btn btn-ghost">
@@ -1054,22 +1063,41 @@
         <span class="sec-rule"></span>
       </div>
 
-      <a href="workshop-zh.html" class="slide-card reveal">
-        <div class="slide-preview">
-          <div class="slide-preview-title">打造你的<br><em>AI 工作流</em></div>
-          <div class="slide-preview-ports">
-            <i></i><u></u><i></i><u></u><i></i>
+      <div class="slides-grid reveal">
+        <a href="workshop-zh.html" class="slide-card">
+          <div class="slide-preview">
+            <div class="slide-preview-title">打造你的<br><em>AI 工作流</em></div>
+            <div class="slide-preview-ports">
+              <i></i><u></u><i></i><u></u><i></i>
+            </div>
           </div>
-        </div>
-        <div class="slide-info">
-          <span class="slide-lang">繁體中文 · ZH-TW</span>
-          <span class="slide-name">工作坊投影片</span>
-          <span class="slide-open">
-            開啟投影片
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </span>
-        </div>
-      </a>
+          <div class="slide-info">
+            <span class="slide-lang">繁體中文 · ZH-TW</span>
+            <span class="slide-name">中文投影片</span>
+            <span class="slide-open">
+              開啟投影片
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </span>
+          </div>
+        </a>
+
+        <a href="workshop-en.html" class="slide-card">
+          <div class="slide-preview">
+            <div class="slide-preview-title">Build Your<br><em>AI Workflow</em></div>
+            <div class="slide-preview-ports">
+              <i></i><u></u><i></i><u></u><i></i>
+            </div>
+          </div>
+          <div class="slide-info">
+            <span class="slide-lang">English · EN</span>
+            <span class="slide-name">English Slides</span>
+            <span class="slide-open">
+              Open slides
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </span>
+          </div>
+        </a>
+      </div>
     </section>
 
     <!-- ── SPEAKER ── -->
