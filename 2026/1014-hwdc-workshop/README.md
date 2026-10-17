@@ -4,17 +4,17 @@
 
 ## 活動資訊
 
-| 項目     | 內容                                                                    |
-| -------- | ----------------------------------------------------------------------- |
-| 活動     | [Hello World Dev Conference 2026](https://2026.helloworld.dev/)         |
-| 日期     | 2026-10-14                                                              |
-| 時間     | 13:30 – 15:00                                                           |
-| 地點     | 臺北文創大樓 6 樓                                                       |
-| 形式     | 90 分鐘 Workshop（實機操作）                                            |
-| 語言     | 中文                                                                    |
-| 徵稿主題 | 徵稿主題 4｜AI 驅動的軟體開發資安新思維                                 |
-| Repo     | <https://github.com/go-training/mcp-oauth2-workshop>                    |
-| 投影片   | [workshop-zh.html](./workshop-zh.html)                                  |
+| 項目     | 內容                                                                |
+| -------- | ------------------------------------------------------------------- |
+| 活動     | [Hello World Dev Conference 2026](https://hwdc.ithome.com.tw/2026/) |
+| 日期     | 2026-10-14                                                          |
+| 時間     | 13:30 – 15:00                                                       |
+| 地點     | 臺北文創大樓 6 樓                                                   |
+| 形式     | 90 分鐘 Workshop（實機操作）                                        |
+| 語言     | 中文                                                                |
+| 徵稿主題 | 徵稿主題 4｜AI 驅動的軟體開發資安新思維                             |
+| Repo     | <https://github.com/go-training/mcp-oauth2-workshop>                |
+| 投影片   | [workshop-zh.html](./workshop-zh.html)                              |
 
 ## 講者
 
@@ -27,14 +27,14 @@ MCP 授權規格的方向是**把 MCP Server 視為 OAuth 的 Resource Server**�
 
 ## 課程路線
 
-| Lab    | 時間     | 問題                       | 重點                                                     |
-| ------ | -------- | -------------------------- | -------------------------------------------------------- |
-| Lab 01 | 10 分    | 沒有授權會怎樣？           | 任何人都能呼叫所有工具                                   |
-| Lab 02 | 15 分    | Client 怎麼知道去哪登入？  | 401 → PRM（RFC 9728）→ AS metadata（RFC 8414）           |
-| Lab 03 | 25 分    | 怎麼證明你是誰？           | Authorization Code + PKCE（RFC 7636），Server 驗 JWT     |
-| Lab 04 | 20 分    | 你能做什麼、能去哪？       | scope、audience（RFC 8707）、subject 隔離                |
-| Lab 06 | 10 分    | 多個服務怎麼共用入口？     | Kong + mcp-oauth2 plugin 集中驗 Token                    |
-| Lab 05 | 課後選修 | 撤銷後會立刻失效嗎？       | 離線驗證的限制                                           |
+| Lab    | 時間     | 問題                      | 重點                                                 |
+| ------ | -------- | ------------------------- | ---------------------------------------------------- |
+| Lab 01 | 10 分    | 沒有授權會怎樣？          | 任何人都能呼叫所有工具                               |
+| Lab 02 | 15 分    | Client 怎麼知道去哪登入？ | 401 → PRM（RFC 9728）→ AS metadata（RFC 8414）       |
+| Lab 03 | 25 分    | 怎麼證明你是誰？          | Authorization Code + PKCE（RFC 7636），Server 驗 JWT |
+| Lab 04 | 20 分    | 你能做什麼、能去哪？      | scope、audience（RFC 8707）、subject 隔離            |
+| Lab 06 | 10 分    | 多個服務怎麼共用入口？    | Kong + mcp-oauth2 plugin 集中驗 Token                |
+| Lab 05 | 課後選修 | 撤銷後會立刻失效嗎？      | 離線驗證的限制                                       |
 
 ## 帶走這七件事
 
