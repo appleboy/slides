@@ -1,0 +1,661 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>MCP OAuth 2.0 Workshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: fixed 1600x900 slide canvas scaled to fit the window; each role (Client, Signet, MCP Server, Kong) owns one color used in every diagram. */
+:root{
+  --bg:#e9ebf1;
+  --paper:#fbfbfd;
+  --surface:#f1f3f8;
+  --ink:#151a2b;
+  --muted:#5c6378;
+  --line:#d8dce6;
+  --note:#eef0f6;
+  --client:#2d55e0;
+  --browser:#6a7082;
+  --signet:#7646cf;
+  --server:#0c8574;
+  --kong:#c9600f;
+  --deny:#cf3434;
+  --ok:#1d8648;
+  --warn:#b8720a;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#070a12;--paper:#10141f;--surface:#171c2a;--ink:#e8ebf4;--muted:#99a0b4;--line:#262c3d;--note:#1a2031;
+  --client:#7d9cff;--browser:#a0a6b6;--signet:#b596ff;--server:#40c9b3;--kong:#f39a55;--deny:#ff7474;--ok:#5ed38e;--warn:#f2b54d;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#070a12;--paper:#10141f;--surface:#171c2a;--ink:#e8ebf4;--muted:#99a0b4;--line:#262c3d;--note:#1a2031;
+  --client:#7d9cff;--browser:#a0a6b6;--signet:#b596ff;--server:#40c9b3;--kong:#f39a55;--deny:#ff7474;--ok:#5ed38e;--warn:#f2b54d;color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  padding-inline:16px;padding-block:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;overflow:hidden}
+.frame{position:relative;overflow:hidden;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,.06),0 8px 30px rgba(0,0,0,.06);background:var(--paper)}
+.canvas{position:absolute;left:0;top:0;width:1600px;height:900px;transform-origin:0 0}
+.slide{position:absolute;inset:0;padding:40px 88px 70px;display:none;flex-direction:column;gap:24px;background:var(--paper)}
+.slide.on{display:flex}
+h1,h2,h3,p,ul{margin:0}
+.slide.d{padding:30px 64px 30px;gap:12px}
+.slide.d h2{font-size:40px;max-width:880px}
+.slide.d .foot{top:32px;bottom:auto;left:auto;right:64px;width:540px;flex-direction:column-reverse;align-items:flex-end;text-align:right;gap:8px;font-size:21px;line-height:1.45}
+.slide.d .row>.side{flex:0 0 440px}
+.kicker{font-family:var(--mono);font-size:19px;letter-spacing:.14em;text-transform:uppercase;color:var(--tone,var(--client));font-weight:500;display:flex;gap:14px;align-items:center}
+.kicker::before{content:"";width:28px;height:3px;background:currentColor;border-radius:2px}
+h2{font-size:60px;line-height:1.2;font-weight:900;letter-spacing:-.005em;text-wrap:balance}
+.lede{font-size:30px;line-height:1.55;color:var(--muted);max-width:60ch}
+.foot{position:absolute;left:88px;right:88px;bottom:26px;display:flex;justify-content:space-between;gap:40px;font-size:19px;color:var(--muted)}
+.foot .pno{font-family:var(--mono);white-space:nowrap}
+code,.mono{font-family:var(--mono)}
+code{font-size:.86em;background:var(--surface);padding:.08em .38em;border-radius:5px}
+b{font-weight:700}
+.c-client{color:var(--client)}.c-signet{color:var(--signet)}.c-server{color:var(--server)}.c-kong{color:var(--kong)}.c-deny{color:var(--deny)}.c-ok{color:var(--ok)}.c-warn{color:var(--warn)}.c-muted{color:var(--muted)}
+
+/* cover */
+.cover{display:grid;grid-template-columns:1fr 640px;gap:64px;align-items:center;flex:1}
+.cover h1{font-size:90px;white-space:nowrap;line-height:1.02;font-weight:900;letter-spacing:-.02em}
+.cover h1 span{display:block;color:var(--muted);font-weight:500;font-size:64px;letter-spacing:0;margin-top:14px}
+.cover .lede{margin-top:34px;font-size:32px;color:var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:34px}
+.chip{font-family:var(--mono);font-size:19px;padding:7px 14px;border-radius:99px;border:1.5px solid var(--line);color:var(--muted)}
+
+/* cards */
+.grid{display:grid;gap:24px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--surface);border-radius:16px;padding:30px 30px 32px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.role{font-family:var(--mono);font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--c);display:flex;align-items:center;gap:10px}
+.role::before{content:"";width:13px;height:13px;border-radius:50%;background:var(--c)}
+.card h3{font-size:34px;font-weight:900;line-height:1.25}
+.card p{font-size:27px;line-height:1.55;color:var(--muted)}
+.card.edge{border-top:5px solid var(--c);border-radius:6px 6px 16px 16px}
+ul.dots{list-style:none;padding:0;display:flex;flex-direction:column;gap:12px;font-size:27px;line-height:1.5}
+ul.dots li{position:relative;padding-left:24px}
+ul.dots li::before{content:"";position:absolute;left:0;top:.6em;width:9px;height:9px;border-radius:50%;background:var(--c,var(--muted))}
+.callout{border-left:4px solid var(--tone,var(--client));padding:6px 0 6px 22px;font-size:28px;line-height:1.55}
+
+/* journey */
+.journey{display:grid;grid-template-columns:repeat(5,1fr) 1fr;gap:0;margin-top:20px;position:relative}
+.journey::before{content:"";position:absolute;left:0;right:16.66%;top:33px;height:2px;background:var(--line)}
+.stop{position:relative;padding-right:24px;display:flex;flex-direction:column;gap:14px}
+.stop .n{width:68px;height:68px;border-radius:50%;background:var(--paper);border:2.5px solid var(--c);color:var(--c);font-family:var(--mono);font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;position:relative}
+.stop .q{font-size:29px;font-weight:700;line-height:1.35}
+.stop .a{font-size:22px;color:var(--muted);line-height:1.45}
+.stop.opt .n{border-style:dashed}
+.stop .t{font-family:var(--mono);font-size:18px;color:var(--muted)}
+
+/* code panels */
+.json{background:var(--surface);border-radius:14px;padding:24px 26px;font-family:var(--mono);font-size:22px;line-height:1.75;white-space:pre;overflow:hidden}
+.json .k{color:var(--c,var(--client))}
+.json .s{color:var(--ink)}
+.json .p{color:var(--muted)}
+.json .hl{background:color-mix(in srgb,var(--c) 16%,transparent);border-radius:4px;padding:1px 4px;margin:-1px -4px}
+.panelhead{font-family:var(--mono);font-size:19px;color:var(--muted);margin-bottom:12px;display:flex;gap:10px;align-items:center}
+.panelhead b{color:var(--c);font-weight:500}
+
+/* pkce */
+.pk{display:grid;grid-template-columns:1fr 120px 1fr;align-items:center;gap:0;margin-top:6px}
+.pk .box{background:var(--surface);border-radius:14px;padding:26px 28px;display:flex;flex-direction:column;gap:8px}
+.pk .box .nm{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--client)}
+.pk .box p{font-size:24px;color:var(--muted);line-height:1.5}
+.pk .arrow{text-align:center;font-family:var(--mono);font-size:18px;color:var(--muted);line-height:1.4}
+.pk .arrow i{display:block;font-style:normal;font-size:38px;color:var(--ink)}
+.phase{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.phase .card{padding:24px 28px;gap:10px}
+.phase .card h3{font-size:29px}
+
+/* claims */
+.claims{display:grid;grid-template-columns:640px 1fr;gap:44px;align-items:start}
+.claimrows{display:flex;flex-direction:column;gap:0}
+.claimrows div{display:grid;grid-template-columns:96px 1fr;gap:20px;padding:13px 0;border-bottom:1px solid var(--line);font-size:26px;line-height:1.45;align-items:baseline}
+.claimrows div:last-child{border-bottom:0}
+.claimrows .mono{color:var(--server);font-weight:700;font-size:24px}
+
+/* status codes */
+.code-big{font-family:var(--mono);font-size:92px;font-weight:700;line-height:1;color:var(--c)}
+.code-sub{font-family:var(--mono);font-size:22px;color:var(--muted)}
+.fix{margin-top:auto;padding-top:18px;border-top:1px solid var(--line);font-size:25px;line-height:1.5}
+.fix b{color:var(--c)}
+
+/* diagrams */
+.seq{flex:1;min-height:0;display:flex}
+.seq svg{width:100%;height:100%;display:block}
+.seq text{font-family:var(--sans)}
+.seq .m{font-family:var(--mono)}
+.row{display:flex;gap:40px;align-items:stretch;flex:1;min-height:0}
+.row>.seq{flex:1.3}
+.row>.side{flex:1;display:flex;flex-direction:column;gap:22px;justify-content:center;min-width:0}
+
+/* recap */
+.recap{display:grid;grid-template-columns:1fr 1fr;gap:18px 56px;margin-top:6px}
+.recap div{display:grid;grid-template-columns:22px 1fr;gap:14px;font-size:27px;line-height:1.5;padding:14px 0;border-bottom:1px solid var(--line)}
+.recap div::before{content:"";width:12px;height:12px;border-radius:3px;background:var(--c);margin-top:.5em}
+
+/* nav */
+.nav{display:flex;align-items:center;gap:10px;color:var(--muted);font:14px var(--mono)}
+.nav button{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:6px 14px;cursor:pointer}
+.nav button:hover{color:var(--client);border-color:var(--client)}
+.nav button:focus-visible{outline:2px solid var(--client);outline-offset:2px}
+.prog{width:180px;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--client);transition:width .2s}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+body.full{padding:0;gap:0;background:#000}
+body.full .nav{display:none}
+body.full .frame{border-radius:0;box-shadow:none}
+</style>
+
+<div class="frame" id="frame"><div class="canvas" id="canvas">
+
+<!-- 1 cover -->
+<section class="slide" style="--tone:var(--client)">
+  <div class="kicker">Hello World Dev Conference 2026 · Workshop</div>
+  <div class="cover">
+    <div>
+      <h1>MCP OAuth 2.0<span>Workshop</span></h1>
+      <p class="lede">讓 AI Agent、MCP Server 與 CLI 安全登入</p>
+      <div class="chips"><span class="chip">MCP Authorization 2026-07-28</span><span class="chip">OAuth 2.0 + PKCE</span><span class="chip">Signet</span><span class="chip">Kong Gateway</span></div>
+    </div>
+    <div class="seq" data-seq="cover" style="height:520px;flex:none"></div>
+  </div>
+  <div class="foot"><span>2026/10/14 · 13:30–15:00</span><span>github.com/go-training/mcp-oauth2-workshop</span></div>
+</section>
+
+<!-- 2 roles -->
+<section class="slide" style="--tone:var(--client)">
+  <div class="kicker">角色</div>
+  <h2>一次授權，四個參與者</h2>
+  <div class="grid g4" style="margin-top:8px">
+    <div class="card edge" style="--c:var(--client)"><div class="role">Client</div><h3>Claude Code<br>Codex CLI</h3><p>代表你登入、保管 Token，每次呼叫 MCP 都帶上它。</p></div>
+    <div class="card edge" style="--c:var(--browser)"><div class="role">Browser</div><h3>瀏覽器<br>（你）</h3><p>登入帳號，確認這個 App 要拿哪些權限，按下允許。</p></div>
+    <div class="card edge" style="--c:var(--signet)"><div class="role">Authorization Server</div><h3>Signet</h3><p>驗證身分、徵得同意、簽發 Token，公開驗簽用的 JWKS。</p></div>
+    <div class="card edge" style="--c:var(--server)"><div class="role">Resource Server</div><h3>MCP Server</h3><p>持有工具與資料。驗 Token，決定放不放行。</p></div>
+  </div>
+  <div class="callout" style="margin-top:auto;--tone:var(--client)">Client ID 是公開識別，不是密碼。CLI 屬於 <b>public Client</b>，沒有 client secret，所以要靠 <b>PKCE</b> 保護登入流程。</div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 3 journey -->
+<section class="slide" style="--tone:var(--client)">
+  <div class="kicker">課程路線</div>
+  <h2>每一關回答一個問題</h2>
+  <div class="journey">
+    <div class="stop" style="--c:var(--deny)"><div class="n">01</div><div class="t">10 分</div><div class="q">沒有授權會怎樣？</div><div class="a">任何人都能呼叫所有工具</div></div>
+    <div class="stop" style="--c:var(--server)"><div class="n">02</div><div class="t">15 分</div><div class="q">Client 怎麼知道去哪登入？</div><div class="a">401 → PRM → AS metadata</div></div>
+    <div class="stop" style="--c:var(--signet)"><div class="n">03</div><div class="t">25 分</div><div class="q">怎麼證明你是誰？</div><div class="a">Authorization Code + PKCE，Server 驗 JWT</div></div>
+    <div class="stop" style="--c:var(--client)"><div class="n">04</div><div class="t">20 分</div><div class="q">你能做什麼、能去哪？</div><div class="a">scope、audience、subject 隔離</div></div>
+    <div class="stop" style="--c:var(--kong)"><div class="n">06</div><div class="t">10 分</div><div class="q">多個服務怎麼共用入口？</div><div class="a">Kong 集中驗 Token</div></div>
+    <div class="stop opt" style="--c:var(--muted)"><div class="n">05</div><div class="t">課後選修</div><div class="q">撤銷後會立刻失效嗎？</div><div class="a">離線驗證的限制</div></div>
+  </div>
+  <div class="callout" style="margin-top:auto">程式是完整可執行的完成版。重點不是手刻 OAuth，而是看懂每個請求、每一次拒絕代表什麼。</div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 4 lab01 -->
+<section class="slide" style="--tone:var(--deny)">
+  <div class="kicker">Lab 01 · 沒有授權</div>
+  <h2>MCP Server 只是一個 HTTP 端點</h2>
+  <div class="row">
+    <div class="side">
+      <p class="lede" style="color:var(--ink)">Lab 01 的 Server 不檢查任何東西，所以呼叫一定成功。</p>
+      <ul class="dots" style="--c:var(--deny)">
+        <li>不知道呼叫者是誰</li>
+        <li>分不出讀取與寫入</li>
+        <li>能連到這個 port 的程式，就能用全部工具</li>
+      </ul>
+      <p class="lede" style="font-size:25px">工具：<code>whoami</code>、<code>list_notes</code>、<code>create_note</code>。筆記存在記憶體裡。</p>
+    </div>
+    <div class="seq" data-seq="lab01"></div>
+  </div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 5 discovery concept -->
+<section class="slide" style="--tone:var(--server)">
+  <div class="kicker">Lab 02 · 概念</div>
+  <h2>兩份 metadata，把 Client 帶到登入頁</h2>
+  <div class="grid g2" style="align-items:start">
+    <div style="--c:var(--server)">
+      <div class="panelhead"><b>MCP Server</b> GET /.well-known/oauth-protected-resource/mcp</div>
+<div class="json"><span class="p">{</span>
+  <span class="k">"resource"</span><span class="p">:</span> <span class="s">"http://localhost:8000/mcp"</span><span class="p">,</span>
+  <span class="k">"authorization_servers"</span><span class="p">: [</span>
+    <span class="s hl">"https://signet.wu-boy.com"</span>
+  <span class="p">]</span>
+<span class="p">}</span></div>
+      <p class="lede" style="font-size:24px;margin-top:16px"><b style="color:var(--server)">Protected Resource Metadata（PRM）</b>：我是哪個資源、信任哪個 Authorization Server。這是 MCP Server 自己的端點，不是另一台伺服器。</p>
+    </div>
+    <div style="--c:var(--signet)">
+      <div class="panelhead"><b>Signet</b> GET AS metadata（依 issuer 建構）</div>
+<div class="json"><span class="p">{</span>
+  <span class="k">"issuer"</span><span class="p">:</span> <span class="s hl">"https://signet.wu-boy.com"</span><span class="p">,</span>
+  <span class="k">"authorization_endpoint"</span><span class="p">:</span> <span class="s">"…"</span><span class="p">,</span>
+  <span class="k">"token_endpoint"</span><span class="p">:</span> <span class="s">"…"</span><span class="p">,</span>
+  <span class="k">"jwks_uri"</span><span class="p">:</span> <span class="s">"…"</span><span class="p">,</span>
+  <span class="k">"code_challenge_methods_supported"</span><span class="p">: [</span><span class="s">"S256"</span><span class="p">]</span>
+<span class="p">}</span></div>
+      <p class="lede" style="font-size:24px;margin-top:16px"><b style="color:var(--signet)">AS metadata</b>：去哪登入、去哪換 Token、去哪拿公鑰，以及支援哪種 PKCE。</p>
+    </div>
+  </div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 6 discovery seq -->
+<section class="slide d" style="--tone:var(--server)">
+  <div class="kicker">Lab 02 · Sequence</div>
+  <h2>Authorization Server Discovery</h2>
+  <div class="seq" data-seq="lab02"></div>
+  <div class="foot"><span>Lab 02 到此結束，不需要登入。這一關即使帶有效 Token 也回 401。</span><span class="pno"></span></div>
+</section>
+
+<!-- 7 pkce concept -->
+<section class="slide" style="--tone:var(--signet)">
+  <div class="kicker">Lab 03 · 概念</div>
+  <h2>PKCE：先給鎖頭，最後才拿出鑰匙</h2>
+  <div class="pk">
+    <div class="box"><div class="nm">code_verifier</div><p>Client 產生的隨機字串，一直留在 Client 手上。</p></div>
+    <div class="arrow"><i>→</i>SHA-256<br>base64url</div>
+    <div class="box"><div class="nm" style="color:var(--signet)">code_challenge</div><p>放進授權網址，讓 Signet 先記下來。<code>method=S256</code></p></div>
+  </div>
+  <div class="phase">
+    <div class="card" style="--c:var(--signet)"><div class="role">授權階段</div><h3>只送 challenge</h3><p>瀏覽器帶回的是授權碼 <code>code</code>，還不是 Token。</p></div>
+    <div class="card" style="--c:var(--client)"><div class="role">換 Token 階段</div><h3>送出 verifier</h3><p>Signet 確認 SHA-256(verifier) 等於當初的 challenge。攔截到 code 的人沒有 verifier，換不到 Token。</p></div>
+  </div>
+  <div class="callout" style="--tone:var(--signet);font-size:24px">同一個流程還有兩道檢查：<code>state</code> 確認 callback 屬於這次登入；<code>iss</code>（RFC 9207）確認回應來自預期的 Authorization Server。</div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 8 lab03 seq -->
+<section class="slide d" style="--tone:var(--signet)">
+  <div class="kicker">Lab 03 · Sequence 1/2</div>
+  <h2>登入授權：瀏覽器帶回的是 code，不是 Token</h2>
+  <div class="seq" data-seq="lab03a"></div>
+  <div class="foot"><span>授權網址只帶 code_challenge；verifier 留在 Client。</span><span class="pno"></span></div>
+</section>
+
+<section class="slide d" style="--tone:var(--signet)">
+  <div class="kicker">Lab 03 · Sequence 2/2</div>
+  <h2>換 Token，然後帶 Token 呼叫 MCP</h2>
+  <div class="seq" data-seq="lab03b"></div>
+  <div class="foot"><span>瀏覽器登入狀態不會自動附到 MCP 請求；每次呼叫都要帶 Access Token。</span><span class="pno"></span></div>
+</section>
+
+<!-- 9 token validation -->
+<section class="slide" style="--tone:var(--server)">
+  <div class="kicker">Lab 03 · 概念</div>
+  <h2>MCP Server 收到 Token 後問五個問題</h2>
+  <div class="claims">
+    <div style="--c:var(--server)">
+      <div class="panelhead"><b>Access Token payload</b> 示意，非實際內容</div>
+<div class="json" style="font-size:22px"><span class="p">// header: alg RS256, kid → 從 JWKS 找公鑰</span>
+<span class="p">{</span>
+  <span class="k">"iss"</span><span class="p">:</span>  <span class="s">"https://signet.wu-boy.com"</span><span class="p">,</span>
+  <span class="k">"aud"</span><span class="p">:</span>  <span class="s">"http://localhost:8000/mcp"</span><span class="p">,</span>
+  <span class="k">"sub"</span><span class="p">:</span>  <span class="s">"練習帳號識別值"</span><span class="p">,</span>
+  <span class="k">"exp"</span><span class="p">:</span>  <span class="s">到期時間</span><span class="p">,</span>
+  <span class="k">"type"</span><span class="p">:</span> <span class="s">"access"</span><span class="p">,</span>
+  <span class="k">"scope"</span><span class="p">:</span><span class="s">"notes:read"</span>
+<span class="p">}</span></div>
+    </div>
+    <div class="claimrows">
+      <div><span class="mono">簽章</span><span>用 Signet 的 JWKS 驗 RS256，確認沒被竄改</span></div>
+      <div><span class="mono">iss</span><span>是不是我信任的 Signet 簽發的？</span></div>
+      <div><span class="mono">aud</span><span>是不是發給<b>我這台</b> Server 的？</span></div>
+      <div><span class="mono">exp</span><span>過期了沒有？</span></div>
+      <div><span class="mono">type</span><span>必須是 <code>access</code>；refresh token 或 ID token 不能呼叫 MCP</span></div>
+      <div><span class="mono">sub</span><span>通過後，用它辨識「你是誰」，<code>whoami</code> 回傳的就是它</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>RS256 + JWKS 是本教材的選擇；MCP 規範並未強制使用 JWT。</span><span class="pno"></span></div>
+</section>
+
+<!-- 10 401 vs 403 -->
+<section class="slide" style="--tone:var(--client)">
+  <div class="kicker">Lab 04 · 概念</div>
+  <h2>401 和 403 是兩種不同的「不行」</h2>
+  <div class="grid g2" style="flex:1">
+    <div class="card" style="--c:var(--deny)">
+      <div class="code-big">401</div><div class="code-sub">Unauthorized</div>
+      <h3 style="margin-top:10px">我無法接受這顆 Token</h3>
+      <ul class="dots" style="--c:var(--deny)"><li>沒帶 Token，或 Token 無效、過期</li><li><b>aud 不符</b>：這顆 Token 是發給別台 Server 的</li></ul>
+      <div class="fix"><b>怎麼辦</b>　為這台 Server 的 resource 重新取得 Token</div>
+    </div>
+    <div class="card" style="--c:var(--warn)">
+      <div class="code-big">403</div><div class="code-sub">insufficient_scope</div>
+      <h3 style="margin-top:10px">我知道你是誰，但你不能做這件事</h3>
+      <ul class="dots" style="--c:var(--warn)"><li>Token 有效、身分確定</li><li>只有 <code>notes:read</code>，卻呼叫 <code>create_note</code></li></ul>
+      <div class="fix"><b>怎麼辦</b>　用更多 scope 重新授權；舊 Token 不會自動升級</div>
+    </div>
+  </div>
+  <div class="callout">第三道邊界是 <b>subject</b>：同一台 Server、同樣的權限，不同帳號仍只看得到自己的筆記。</div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 11 lab04 scope -->
+<section class="slide d" style="--tone:var(--client)">
+  <div class="kicker">Lab 04 · Sequence</div>
+  <h2>scope：讀得到，不代表寫得進去</h2>
+  <div class="seq" data-seq="lab04a"></div>
+  <div class="foot"><span><code>notes:read</code> 控制入口，<code>notes:write</code> 控制寫入工具。</span><span class="pno"></span></div>
+</section>
+
+<!-- 12 lab04 audience -->
+<section class="slide d" style="--tone:var(--client)">
+  <div class="kicker">Lab 04 · Sequence</div>
+  <h2>audience：A 的 Token 打不進 B</h2>
+  <div class="seq" data-seq="lab04b"></div>
+  <div class="foot"><span>同一個帳號、同樣的 scope，換一台 Server 就要一顆新的 Token。</span><span class="pno"></span></div>
+</section>
+
+<!-- 13 gateway concept -->
+<section class="slide" style="--tone:var(--kong)">
+  <div class="kicker">Lab 06 · 概念</div>
+  <h2>入口驗證交給 Gateway，業務權限留在服務</h2>
+  <div class="grid g3">
+    <div class="card edge" style="--c:var(--signet)"><div class="role">Signet</div><h3>發 Token</h3>
+      <ul class="dots" style="--c:var(--signet)"><li>使用者登入與同意授權</li><li>簽發 Token</li><li>公開 JWKS</li></ul></div>
+    <div class="card edge" style="--c:var(--kong)"><div class="role">Kong + mcp-oauth2</div><h3>守入口</h3>
+      <ul class="dots" style="--c:var(--kong)"><li>回 401 challenge、提供 PRM</li><li>驗 JWT：簽章、iss、aud、exp</li><li>檢查入口 scope <code>notes:read</code></li></ul></div>
+    <div class="card edge" style="--c:var(--server)"><div class="role">MCP Backend</div><h3>管工具與資料</h3>
+      <ul class="dots" style="--c:var(--server)"><li>驗 Gateway 共享憑證與身分 headers</li><li><code>create_note</code> 仍要求 <code>notes:write</code></li><li>依 subject 隔離資料</li></ul></div>
+  </div>
+  <div class="grid g2" style="margin-top:auto">
+    <div class="callout" style="--tone:var(--kong);font-size:24px"><b>信任邊界</b>　backend 不對外發布 port，只在私有網路接收 Kong 的請求。只送一個 <code>X-MCP-Subject: admin</code> header 騙不過它。</div>
+    <div class="callout" style="--tone:var(--muted);font-size:24px"><b>取捨</b>　Gateway 多一個要維運的服務。只有一台 MCP Server 時，Lab 04 的自行驗證仍然適用。</div>
+  </div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 14 gateway seq -->
+<section class="slide d" style="--tone:var(--kong)">
+  <div class="kicker">Lab 06 · Sequence 1/2</div>
+  <h2>Kong 守入口：401、PRM 與 JWT 驗證</h2>
+  <div class="seq" data-seq="lab06a"></div>
+  <div class="foot"><span>Kong 不代替使用者登入；登入仍由 Client 向 Signet 完成。</span><span class="pno"></span></div>
+</section>
+
+<section class="slide d" style="--tone:var(--kong)">
+  <div class="kicker">Lab 06 · Sequence 2/2</div>
+  <h2>入口通過，不代表能用所有工具</h2>
+  <div class="seq" data-seq="lab06b"></div>
+  <div class="foot"><span>Kong 驗入口，MCP backend 管工具與資料權限。</span><span class="pno"></span></div>
+</section>
+
+<!-- 15 revocation -->
+<section class="slide d" style="--tone:var(--warn)">
+  <div class="kicker">Lab 05 · 課後選修</div>
+  <h2>撤銷成功 ≠ 立刻被拒絕</h2>
+  <div class="row">
+    <div class="seq" data-seq="lab05" style="flex:1.5"></div>
+    <div class="side">
+      <p class="lede" style="color:var(--ink)">本教材的 Server 與 Kong plugin 都<b>離線</b>驗 JWT，不會每次向 Signet 查撤銷狀態。</p>
+      <ul class="dots" style="--c:var(--warn)">
+        <li>撤銷不改變簽章，未過期的 Token 仍可能通過</li>
+        <li>RFC 7009：已撤銷或未知的 Token 也可能回 200</li>
+        <li>需要即時拒絕時，再設計 introspection 或其他撤銷傳播機制</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span>public Client 撤銷只需 client_id 與 Token，不需要 secret。</span><span class="pno"></span></div>
+</section>
+
+<!-- 16 recap -->
+<section class="slide" style="--tone:var(--client)">
+  <div class="kicker">重點回顧</div>
+  <h2>帶走這七件事</h2>
+  <div class="recap">
+    <div style="--c:var(--server)"><span><b>401 + PRM</b> 告訴 Client 去哪登入；Server 不代替 Client 登入</span></div>
+    <div style="--c:var(--signet)"><span>public Client 沒有 secret，靠 <b>PKCE</b> 保護授權碼</span></div>
+    <div style="--c:var(--client)"><span>每次呼叫 MCP 都要帶 <b>Access Token</b></span></div>
+    <div style="--c:var(--server)"><span>Server 驗<b>簽章、iss、aud、exp、type</b></span></div>
+    <div style="--c:var(--deny)"><span><b>401</b> 是 Token 不被接受；<b>403</b> 是權限不夠</span></div>
+    <div style="--c:var(--kong)"><span><b>Gateway</b> 集中入口驗證，工具與資料權限仍留在服務</span></div>
+    <div style="--c:var(--warn)"><span><b>撤銷</b>不等於立即失效，離線驗證要另外處理</span></div>
+  </div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+<!-- 17 qa -->
+<section class="slide" style="--tone:var(--client)">
+  <div class="kicker">Q&amp;A</div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:30px">
+    <h1 style="font-size:150px;font-weight:900;letter-spacing:-.02em;line-height:1">Q&amp;A</h1>
+    <div class="grid g3" style="max-width:1300px">
+      <div><div class="role" style="--c:var(--client)">教材</div><p class="mono" style="font-size:24px;margin-top:12px;line-height:1.5">github.com/go-training/<br>mcp-oauth2-workshop</p></div>
+      <div><div class="role" style="--c:var(--signet)">規範</div><p class="mono" style="font-size:24px;margin-top:12px;line-height:1.5">modelcontextprotocol.io<br>Authorization 2026-07-28</p></div>
+      <div><div class="role" style="--c:var(--kong)">Gateway</div><p class="mono" style="font-size:24px;margin-top:12px;line-height:1.5">github.com/go-signet/<br>kong-mcp-oauth2</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>MCP OAuth 2.0 Workshop</span><span class="pno"></span></div>
+</section>
+
+</div></div>
+
+<div class="nav">
+  <button id="prev" type="button" aria-label="上一頁">←</button>
+  <div class="prog"><i id="bar"></i></div>
+  <span id="cnt"></span>
+  <button id="next" type="button" aria-label="下一頁">→</button>
+  <button id="fs" type="button" aria-label="全螢幕" title="全螢幕（F）">⛶ 全螢幕</button>
+</div>
+
+<script>
+(function(){
+  /* ---------- sequence diagram renderer ---------- */
+  var P={
+    C:{l:'Client',s:'Claude Code / Codex',c:'--client'},
+    B:{l:'瀏覽器（你）',s:'登入與同意',c:'--browser'},
+    A:{l:'Signet',s:'Authorization Server',c:'--signet'},
+    R:{l:'MCP Server',s:'Resource Server · :8000',c:'--server'},
+    R1:{l:'MCP Server',s:'Lab 01 · 無授權',c:'--server'},
+    RA:{l:'Server A',s:'resource :8000/mcp',c:'--server'},
+    RB:{l:'Server B',s:'resource :8001/mcp',c:'--server'},
+    K:{l:'Kong',s:'mcp-oauth2 · :9000',c:'--kong'},
+    M:{l:'MCP Backend',s:'私有網路',c:'--server'}
+  };
+  var D={
+    cover:{w:640,parts:['C','A','R'],steps:[
+      {f:'C',t:'R',m:'tools/call',k:'req'},
+      {f:'R',t:'C',m:'401 + resource_metadata',k:'deny'},
+      {f:'C',t:'A',m:'PKCE 登入',k:'req'},
+      {f:'A',t:'C',m:'Access Token',k:'ok'},
+      {f:'C',t:'R',m:'Bearer <token>',k:'req'},
+      {f:'R',t:'C',m:'200 OK',k:'ok'}
+    ],compact:true},
+    lab01:{w:760,parts:['C','R1'],steps:[
+      {f:'C',t:'R1',m:'tools/call whoami',s:'沒有 Authorization header',k:'req'},
+      {f:'R1',t:'C',m:'200 OK',k:'res'},
+      {f:'C',t:'R1',m:'tools/call create_note',s:'任何人都能寫入',k:'req'},
+      {f:'R1',t:'C',m:'200 OK',k:'res'},
+      {note:['R1'],m:'不知道你是誰\n也無從限制你能做什麼',tone:'--deny'}
+    ]},
+    lab02:{w:1472,parts:['C','R','A'],steps:[
+      {f:'C',t:'R',m:'GET /mcp',s:'未帶 Token',k:'req'},
+      {f:'R',t:'C',m:'401 Unauthorized',s:'WWW-Authenticate: Bearer resource_metadata="…"',k:'deny'},
+      {f:'C',t:'R',m:'GET resource_metadata 指定的 URL',s:'/.well-known/oauth-protected-resource/mcp',k:'req'},
+      {f:'R',t:'C',m:'200 PRM',s:'resource、authorization_servers',k:'res'},
+      {note:['C'],m:'選定 authorization_servers 裡的 issuer'},
+      {f:'C',t:'A',m:'GET AS metadata',s:'依 issuer 建構 well-known URL',k:'req'},
+      {f:'A',t:'C',m:'200 AS metadata',s:'authorization_endpoint、token_endpoint、jwks_uri、S256',k:'res'},
+      {note:['C'],m:'確認 metadata 的 issuer 與選定值完全一致'}
+    ]},
+    lab03a:{w:1472,parts:['C','B','A'],steps:[
+      {note:['C'],m:'產生 state 與 code_verifier，算出 code_challenge'},
+      {f:'C',t:'B',m:'開啟授權網址',k:'req'},
+      {f:'B',t:'A',m:'GET authorization_endpoint',s:'client_id · resource · scope · state · code_challenge (S256)',k:'req'},
+      {note:['B','A'],m:'登入練習帳號，確認 App 與權限，按允許'},
+      {f:'A',t:'B',m:'302 → redirect_uri',s:'code · state · iss',k:'res'},
+      {f:'B',t:'C',m:'GET 127.0.0.1:8765/callback',s:'code · state · iss',k:'req'},
+      {note:['C'],m:'檢查 state 與 iss'}
+    ]},
+    lab03b:{w:1472,parts:['C','A','R'],steps:[
+      {f:'C',t:'A',m:'POST token_endpoint',s:'code · code_verifier · client_id · redirect_uri · resource',k:'req'},
+      {note:['A'],m:'SHA-256(verifier) = challenge？',tone:'--signet'},
+      {f:'A',t:'C',m:'Access Token',k:'ok'},
+      {f:'C',t:'R',m:'tools/call whoami',s:'Authorization: Bearer <token>',k:'req'},
+      {note:['R'],m:'驗簽章、iss、aud、exp、type',tone:'--server'},
+      {f:'R',t:'C',m:'200 · subject',k:'ok'}
+    ]},
+    lab04a:{w:1472,parts:['C','A','RA'],steps:[
+      {f:'C',t:'A',m:'登入授權',s:'resource = :8000/mcp · scope = notes:read',k:'req'},
+      {f:'A',t:'C',m:'讀取 Token',k:'res'},
+      {f:'C',t:'RA',m:'list_notes',k:'req'},
+      {f:'RA',t:'C',m:'200 筆記清單',k:'ok'},
+      {f:'C',t:'RA',m:'create_note',s:'同一顆讀取 Token',k:'req'},
+      {f:'RA',t:'C',m:'403 insufficient_scope',s:'不新增筆記',k:'warn'},
+      {div:'同一個帳號重新授權，要求更多權限'},
+      {f:'C',t:'A',m:'登入授權',s:'scope = notes:read notes:write',k:'req'},
+      {f:'A',t:'C',m:'讀寫 Token（新的一顆）',k:'res'},
+      {f:'C',t:'RA',m:'create_note',k:'req'},
+      {f:'RA',t:'C',m:'200 新增成功',k:'ok'}
+    ]},
+    lab04b:{w:1472,parts:['C','A','RB'],steps:[
+      {note:['C'],m:'手上有一顆發給 :8000 的讀取 Token'},
+      {f:'C',t:'RB',m:'whoami',s:'帶 A 的 Token（刻意的負向測試）',k:'req'},
+      {note:['RB'],m:'aud ≠ http://localhost:8001/mcp',tone:'--deny'},
+      {f:'RB',t:'C',m:'401 Unauthorized',k:'deny'},
+      {div:'為 Server B 取得專屬的 Token'},
+      {f:'C',t:'A',m:'登入授權',s:'resource = :8001/mcp · scope = notes:read',k:'req'},
+      {f:'A',t:'C',m:'B 的 Token',k:'res'},
+      {f:'C',t:'RB',m:'whoami',s:'帶 B 的 Token',k:'req'},
+      {f:'RB',t:'C',m:'200 · subject',k:'ok'}
+    ]},
+    lab06a:{w:1472,parts:['C','A','K'],steps:[
+      {f:'C',t:'K',m:'GET /mcp',s:'未帶 Token',k:'req'},
+      {f:'K',t:'C',m:'401 + resource_metadata',s:'PRM 由 Gateway 提供',k:'deny'},
+      {f:'C',t:'A',m:'PKCE 登入',s:'resource = http://localhost:9000/mcp',k:'req'},
+      {f:'A',t:'C',m:'Access Token',k:'res'},
+      {f:'C',t:'K',m:'tools/call whoami',s:'Authorization: Bearer <token>',k:'req'},
+      {note:['K'],m:'離線驗 JWT：簽章、iss、aud、exp\n入口 scope：notes:read',tone:'--kong'}
+    ]},
+    lab06b:{w:1472,parts:['C','K','M'],steps:[
+      {f:'K',t:'M',m:'轉送 whoami',s:'Gateway 共享憑證 + 身分 headers',k:'req'},
+      {note:['M'],m:'驗 Gateway 憑證，檢查工具權限'},
+      {f:'M',t:'C',m:'200 · subject',s:'經 Kong 回傳',k:'ok'},
+      {div:'同一顆只有 notes:read 的 Token，改呼叫 create_note'},
+      {f:'C',t:'K',m:'tools/call create_note',k:'req'},
+      {f:'K',t:'M',m:'入口通過，轉送',k:'req'},
+      {f:'M',t:'C',m:'403 缺少 notes:write',s:'由 backend 拒絕',k:'warn'}
+    ]},
+    lab05:{w:1040,parts:['C','A','R'],steps:[
+      {f:'C',t:'A',m:'PKCE 登入',k:'req'},
+      {f:'A',t:'C',m:'Access Token',k:'res'},
+      {f:'C',t:'R',m:'call',k:'req'},
+      {f:'R',t:'C',m:'200',k:'ok'},
+      {f:'C',t:'A',m:'POST revocation endpoint',s:'client_id · token · hint=access_token',k:'req'},
+      {f:'A',t:'C',m:'200 Revocation accepted',k:'res'},
+      {f:'C',t:'R',m:'call（同一顆 Token）',k:'req'},
+      {note:['R'],m:'簽章仍有效、尚未過期',tone:'--warn'},
+      {f:'R',t:'C',m:'200（仍然通過）',k:'warn'}
+    ]}
+  };
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function tw(s,size,mono){var w=0;for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);w+=c<0x2000?size*(mono?.6:.56):size*1.0}return w}
+  var uid=0;
+  var KC={req:'--ink',res:'--muted',ok:'--ok',deny:'--deny',warn:'--warn'};
+  function render(def){
+    uid++;
+    var W=def.w,parts=def.parts,n=parts.length,compact=!!def.compact;
+    var pad=compact?100:(n<=2?170:165);
+    var bw=compact?170:300,bh=compact?60:76;
+    var xs={};parts.forEach(function(p,i){xs[p]=n===1?W/2:pad+i*(W-2*pad)/(n-1)});
+    if(n>1) bw=Math.min(bw,(W-2*pad)/(n-1)-28);
+    var fs=compact?19:30, ss=compact?14:23, gap=compact?14:8;
+    var NF=compact?18:27, NL=compact?28:38;
+    var body=[],y=bh+30,num=0;
+    def.steps.forEach(function(st){
+      if(st.div){
+        var h=54, yy=y+h/2, lw=tw(st.div,23)+48;
+        body.push('<line x1="10" x2="'+(W-10)+'" y1="'+yy+'" y2="'+yy+'" style="stroke:var(--line)" stroke-width="1.5" stroke-dasharray="6 6"/>');
+        body.push('<rect x="'+(W/2-lw/2)+'" y="'+(yy-21)+'" width="'+lw+'" height="42" rx="21" style="fill:var(--paper);stroke:var(--line)"/>');
+        body.push('<text x="'+W/2+'" y="'+(yy+8)+'" text-anchor="middle" font-size="23" style="fill:var(--muted)">'+esc(st.div)+'</text>');
+        y+=h+gap;return;
+      }
+      if(st.note){
+        var lines=st.m.split('\n'), h=lines.length*NL+20;
+        var xa=st.note.map(function(p){return xs[p]}), x1=Math.min.apply(null,xa), x2=Math.max.apply(null,xa);
+        var maxw=Math.max.apply(null,lines.map(function(l){return tw(l,NF)}))+48;
+        var w=Math.max(maxw,(x2-x1)+200), cx=(x1+x2)/2, rx=Math.max(4,Math.min(W-4-w,cx-w/2));
+        var tone=st.tone||'--muted';
+        body.push('<rect x="'+rx+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" style="fill:var(--note);stroke:var('+tone+')" stroke-width="1.4" stroke-opacity=".6"/>');
+        lines.forEach(function(l,i){body.push('<text x="'+(rx+w/2)+'" y="'+(y+10+NL*.78+i*NL)+'" text-anchor="middle" font-size="'+NF+'" font-weight="500" style="fill:var('+(st.tone?st.tone:'--ink')+')">'+esc(l)+'</text>')});
+        y+=h+gap;return;
+      }
+      num++;
+      var hasS=!!st.s, h=hasS?(compact?54:86):(compact?40:58);
+      var xf=xs[st.f], xt=xs[st.t], dir=xt>xf?1:-1;
+      var ay=y+h-6, col=KC[st.k]||'--ink', dash=(st.k==='req')?'':' stroke-dasharray="8 6"';
+      var mid=(xf+xt)/2;
+      var mw=tw(st.m,fs)+34, sw=hasS?tw(st.s,ss,true):0, bwid=Math.max(mw,sw)+20;
+      body.push('<rect x="'+(mid-bwid/2)+'" y="'+(y-2)+'" width="'+bwid+'" height="'+(h-12)+'" style="fill:var(--paper)"/>');
+      body.push('<text x="'+mid+'" y="'+(y+fs)+'" text-anchor="middle" font-size="'+fs+'" font-weight="500" style="fill:var('+(st.k==='req'||st.k==='res'?'--ink':col)+')"><tspan class="m" font-size="'+(fs-5)+'" style="fill:var(--muted)">'+num+'  </tspan>'+esc(st.m)+'</text>');
+      if(hasS) body.push('<text class="m" x="'+mid+'" y="'+(y+fs+ss+10)+'" text-anchor="middle" font-size="'+ss+'" style="fill:var(--muted)">'+esc(st.s)+'</text>');
+      var xa1=xf+dir*8, xa2=xt-dir*10;
+      body.push('<line x1="'+xa1+'" x2="'+xa2+'" y1="'+ay+'" y2="'+ay+'" style="stroke:var('+col+')" stroke-width="2.2"'+dash+'/>');
+      var ah=xa2, d=dir*-12;
+      body.push('<path d="M'+(ah+dir*10)+' '+ay+' L'+(ah+d+dir*10)+' '+(ay-7)+' L'+(ah+d+dir*10)+' '+(ay+7)+' Z" style="fill:var('+col+')"/>');
+      y+=h+gap;
+    });
+    var H=y+10;
+    var head=[];
+    parts.forEach(function(p){
+      var c=P[p].c,x=xs[p];
+      head.push('<line x1="'+x+'" x2="'+x+'" y1="'+bh+'" y2="'+H+'" style="stroke:var('+c+')" stroke-opacity=".45" stroke-width="2" stroke-dasharray="3 7"/>');
+      head.push('<rect x="'+(x-bw/2)+'" y="2" width="'+bw+'" height="'+bh+'" rx="12" style="fill:var(--paper);stroke:var('+c+')" stroke-width="2.2"/>');
+      head.push('<text x="'+x+'" y="'+(compact?37:37)+'" text-anchor="middle" font-size="'+(compact?19:30)+'" font-weight="900" style="fill:var('+c+')">'+esc(P[p].l)+'</text>');
+      if(!compact) head.push('<text class="m" x="'+x+'" y="62" text-anchor="middle" font-size="17" style="fill:var(--muted)">'+esc(P[p].s)+'</text>');
+    });
+    return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Sequence diagram">'+head.join('')+body.join('')+'</svg>';
+  }
+  [].forEach.call(document.querySelectorAll('[data-seq]'),function(el){var d=D[el.getAttribute('data-seq')];if(d)el.innerHTML=render(d)});
+
+  /* ---------- deck ---------- */
+  var slides=[].slice.call(document.querySelectorAll('.slide')), N=slides.length, cur=0;
+  slides.forEach(function(s,i){var p=s.querySelector('.pno');if(p)p.textContent=String(i+1).padStart(2,'0')+' / '+N});
+  var frame=document.getElementById('frame'),canvas=document.getElementById('canvas'),bar=document.getElementById('bar'),cnt=document.getElementById('cnt');
+  function fit(){
+    var full=document.body.classList.contains('full');
+    var vw=full?window.innerWidth:document.documentElement.clientWidth-32, vh=full?window.innerHeight:window.innerHeight-32-48;
+    var s=Math.max(.1,Math.min(vw/1600,vh/900));
+    canvas.style.transform='scale('+s+')';
+    frame.style.width=(1600*s)+'px';frame.style.height=(900*s)+'px';
+  }
+  function fromHash(){var m=/^#s(\d+)$/.exec(location.hash);return m?Math.min(N,Math.max(1,+m[1]))-1:0}
+  function show(i,push){
+    cur=Math.min(N-1,Math.max(0,i));
+    slides.forEach(function(s,k){s.classList.toggle('on',k===cur)});
+    bar.style.width=((cur+1)/N*100)+'%';cnt.textContent=(cur+1)+' / '+N;
+    if(push){try{history.replaceState(null,'','#s'+(cur+1))}catch(e){}}
+  }
+  document.getElementById('prev').onclick=function(){show(cur-1,true)};
+  document.getElementById('next').onclick=function(){show(cur+1,true)};
+  document.addEventListener('keydown',function(e){
+    if(['ArrowRight','PageDown',' '].indexOf(e.key)>=0){e.preventDefault();show(cur+1,true)}
+    else if(['ArrowLeft','PageUp'].indexOf(e.key)>=0){e.preventDefault();show(cur-1,true)}
+    else if(e.key==='f'||e.key==='F')toggleFs();
+    else if(e.key==='Home')show(0,true);else if(e.key==='End')show(N-1,true);
+  });
+  var x0=null;
+  frame.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});
+  frame.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)show(cur+(dx<0?1:-1),true)});
+  function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement)}
+  function toggleFs(){
+    try{
+      if(isFs()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+      var el=document.documentElement, req=el.requestFullscreen||el.webkitRequestFullscreen;
+      if(!req){fsBtn.textContent='此環境不支援全螢幕';return}
+      var r=req.call(el); if(r&&r.catch)r.catch(function(){fsBtn.textContent='此環境不支援全螢幕'});
+    }catch(e){fsBtn.textContent='此環境不支援全螢幕'}
+  }
+  var fsBtn=document.getElementById('fs');
+  fsBtn.onclick=toggleFs;
+  function onFs(){document.body.classList.toggle('full',isFs());fit()}
+  document.addEventListener('fullscreenchange',onFs);document.addEventListener('webkitfullscreenchange',onFs);
+  window.addEventListener('resize',fit);
+  window.addEventListener('hashchange',function(){show(fromHash(),false)});
+  fit();show(fromHash(),false);
+})();
+</script>
+
+</body></html>

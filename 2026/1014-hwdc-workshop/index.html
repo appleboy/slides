@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>讓 AI Agent、MCP Server、CLI 安全登入的實作工作坊 — Hello World Dev Conference 2026</title>
+  <meta name="description" content="MCP OAuth 2.0 Workshop：從沒有授權的 MCP Server 出發，一關一關補上 401、Protected Resource Metadata、PKCE、JWT 驗證、scope 與 audience。吳柏毅（appleboy）於 HWDC 2026 的 90 分鐘工作坊。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #e9ebf1;
+      --sheet: #f1f3f8;
+      --card: #fbfbfd;
+      --ink: #151a2b;
+      --muted: #5c6378;
+      --line: #d8dce6;
+      /* one color per role, same as the deck's diagrams */
+      --client: #2d55e0;
+      --signet: #7646cf;
+      --server: #0c8574;
+      --kong: #c9600f;
+      --deny: #cf3434;
+      --ok: #1d8648;
+      --sans: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #070a12;
+        --sheet: #10141f;
+        --card: #171c2a;
+        --ink: #e8ebf4;
+        --muted: #99a0b4;
+        --line: #262c3d;
+        --client: #7d9cff;
+        --signet: #b596ff;
+        --server: #40c9b3;
+        --kong: #f39a55;
+        --deny: #ff7474;
+        --ok: #5ed38e;
+        color-scheme: dark;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.75;
+      overflow-x: hidden;
+    }
+
+    ::selection { background: var(--ink); color: var(--card); }
+
+    a { color: inherit; }
+
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    code {
+      font-family: var(--mono);
+      font-size: 0.86em;
+      background: var(--sheet);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1px 6px;
+    }
+
+    .wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 40px;
+    }
+
+    /* ── TOP BAR ── */
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 22px 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .top-home { font-weight: 700; color: var(--ink); text-decoration: none; }
+    .top-home:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+    /* ── HERO ── */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr);
+      gap: 56px;
+      align-items: center;
+      padding: 48px 0 88px;
+    }
+
+    @media (min-width: 961px) {
+      /* keep the hero from jumping as exchange steps change height */
+      .hero { align-items: start; }
+      .hero > div:first-child { padding-top: 40px; }
+      .xchg-body { min-height: 520px; }
+    }
+
+    .hero-event { font-size: 15px; font-weight: 500; color: var(--muted); margin-bottom: 20px; }
+
+    .hero-title {
+      font-weight: 900;
+      font-size: clamp(34px, 4.4vw, 54px);
+      line-height: 1.22;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+
+    .hero-title span { display: block; }
+
+    @media (min-width: 561px) {
+      .hero-title span { white-space: nowrap; }
+    }
+
+    .hero-desc { color: var(--muted); max-width: 32em; margin-bottom: 36px; }
+
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .btn {
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 13px 26px;
+      border: 2px solid var(--ink);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .btn-solid { background: var(--ink); color: var(--card); }
+    .btn-solid:hover { background: transparent; color: var(--ink); }
+    .btn-line { background: transparent; color: var(--ink); }
+    .btn-line:hover { background: var(--ink); color: var(--card); }
+
+    /* ── EXCHANGE (signature) ── */
+    .xchg {
+      background: var(--card);
+      border: 2px solid var(--ink);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    .xchg-steps {
+      display: flex;
+      list-style: none;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .xchg-steps li { flex: 1; }
+    .xchg-steps li + li { border-left: 1px solid var(--line); }
+
+    .xchg-steps button {
+      width: 100%;
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 12px 4px;
+      background: var(--sheet);
+      color: var(--muted);
+      border: 0;
+      cursor: pointer;
+    }
+
+    .xchg-steps button:hover { color: var(--ink); }
+    .xchg-steps button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: inset 0 -4px 0 var(--ink); }
+
+    .xchg-body { padding: 24px 26px 22px; }
+
+    .xchg-q { font-size: 20px; font-weight: 900; line-height: 1.45; margin-bottom: 16px; }
+
+    .xchg-route {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .role {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .role::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .role.client { color: var(--client); }
+    .role.signet { color: var(--signet); }
+    .role.server { color: var(--server); }
+    .role.kong   { color: var(--kong); }
+
+    .xchg-route svg { width: 26px; height: 12px; color: var(--muted); flex-shrink: 0; }
+
+    .xchg pre {
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: var(--sheet);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .xchg pre + .xchg-route { margin-top: 14px; }
+
+    .status { font-weight: 700; }
+    .status.ok { color: var(--ok); }
+    .status.deny { color: var(--deny); }
+
+    .xchg-why { font-size: 15px; color: var(--muted); margin-top: 16px; }
+
+    .xchg-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 0 26px 22px;
+    }
+
+    .xchg-count { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+    .xchg-next {
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 700;
+      padding: 10px 22px;
+      border-radius: 999px;
+      border: 2px solid var(--ink);
+      background: var(--ink);
+      color: var(--card);
+      cursor: pointer;
+    }
+
+    .xchg-next:hover { background: transparent; color: var(--ink); }
+
+    /* ── FACTS ── */
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-top: 2px solid var(--ink);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .fact { padding: 20px 24px 22px 0; }
+    .fact + .fact { padding-left: 24px; border-left: 1px solid var(--line); }
+    .fact dt { font-size: 13px; color: var(--muted); }
+    .fact dd { font-weight: 700; font-size: 17px; line-height: 1.5; }
+
+    /* ── SECTIONS ── */
+    .sec { padding-top: 104px; }
+
+    .sec-title {
+      font-weight: 900;
+      font-size: clamp(26px, 3.2vw, 38px);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .sec-lead { color: var(--muted); max-width: 40em; margin-bottom: 44px; }
+
+    /* ── CAST ── */
+    .cast {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .actor { padding: 26px 24px 8px 0; border-top: 5px solid currentColor; margin-top: -1px; }
+    .actor + .actor { padding-left: 24px; }
+    .actor.client  { color: var(--client); }
+    .actor.browser { color: var(--muted); }
+    .actor.signet  { color: var(--signet); }
+    .actor.server  { color: var(--server); }
+
+    .actor .kind { font-size: 13px; font-weight: 700; }
+    .actor h3 { color: var(--ink); font-size: 21px; font-weight: 900; line-height: 1.4; margin-bottom: 8px; }
+    .actor p { color: var(--muted); font-size: 15px; }
+
+    .cast-note {
+      margin-top: 32px;
+      padding: 18px 22px;
+      background: var(--card);
+      border-left: 5px solid var(--client);
+      border-radius: 0 12px 12px 0;
+      max-width: 48em;
+      font-size: 15px;
+    }
+
+    /* ── ROUTE ── */
+    .route { list-style: none; border-top: 2px solid var(--ink); }
+
+    .route li {
+      display: grid;
+      grid-template-columns: 5.5em 6em minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 24px;
+      align-items: baseline;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .route .lab { font-family: var(--mono); font-weight: 700; font-size: 15px; }
+    .route .min { font-family: var(--mono); font-size: 14px; color: var(--muted); }
+    .route .ask { font-size: 19px; font-weight: 900; line-height: 1.5; }
+    .route .how { color: var(--muted); font-size: 15px; }
+
+    .route li.optional { color: var(--muted); }
+    .route li.optional .ask { color: var(--muted); font-weight: 700; }
+
+    .route-note { font-size: 15px; color: var(--muted); margin-top: 22px; max-width: 44em; }
+
+    /* ── SEVEN THINGS ── */
+    .seven {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 48px;
+    }
+
+    .seven li {
+      padding: 18px 0 18px 30px;
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    .seven li::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 1.35em;
+      width: 14px;
+      height: 8px;
+      border-left: 3px solid var(--ok);
+      border-bottom: 3px solid var(--ok);
+      transform: rotate(-45deg);
+    }
+
+    .seven b { font-weight: 900; }
+
+    /* ── PREP ── */
+    .prep {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 48px;
+      align-items: start;
+    }
+
+    .prep-list { list-style: none; display: grid; gap: 12px; }
+
+    .prep-list li {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .prep-list li::before {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      transform: translateY(3px);
+    }
+
+    .prep-aside {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 26px 28px;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    .prep-aside h3 { color: var(--ink); font-size: 18px; font-weight: 900; margin-bottom: 8px; }
+
+    /* ── MATERIALS ── */
+    .materials {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .deck {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      border: 2px solid var(--ink);
+      border-radius: 18px;
+      overflow: hidden;
+      text-decoration: none;
+      background: var(--card);
+    }
+
+    .deck-cover {
+      aspect-ratio: 16 / 9;
+      background: var(--sheet);
+      border-bottom: 2px solid var(--ink);
+      padding: 6% 8%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .deck-cover strong { font-size: clamp(22px, 2.8vw, 34px); font-weight: 900; line-height: 1.25; }
+    .deck-cover small { color: var(--muted); font-size: 15px; font-weight: 500; }
+
+    .deck-roles { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; font-weight: 700; }
+
+    .deck-info { padding: 24px 28px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .deck-info h3 { font-size: 22px; font-weight: 900; }
+
+    .deck-go {
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 5px;
+      text-decoration-thickness: 2px;
+    }
+
+    .deck:hover .deck-go { color: var(--client); }
+
+    .refs {
+      list-style: none;
+      border-top: 2px solid var(--ink);
+    }
+
+    .refs li { padding: 18px 0; border-bottom: 1px solid var(--line); }
+    .refs .what { font-size: 14px; color: var(--muted); display: block; }
+
+    .refs a {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+      text-underline-offset: 4px;
+    }
+
+    .refs a:hover { color: var(--client); }
+
+    /* ── SPEAKER ── */
+    .speaker {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 36px;
+      align-items: start;
+      border-top: 2px solid var(--ink);
+      padding-top: 36px;
+    }
+
+    .speaker-mark {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 900;
+    }
+
+    .speaker-name { font-size: 28px; font-weight: 900; line-height: 1.3; }
+    .speaker-name span { font-weight: 500; color: var(--muted); font-size: 20px; margin-left: 8px; }
+    .speaker-role { font-weight: 700; margin: 4px 0 14px; }
+    .speaker-bio { color: var(--muted); max-width: 40em; margin-bottom: 16px; }
+    .speaker-links { display: flex; gap: 24px; flex-wrap: wrap; font-weight: 700; }
+    .speaker-links a { text-underline-offset: 4px; }
+    .speaker-links a:hover { color: var(--client); }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 104px;
+      border-top: 1px solid var(--line);
+      padding: 28px 0 40px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .footer a { text-underline-offset: 4px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .wrap { padding: 0 22px; }
+      .hero { grid-template-columns: minmax(0, 1fr); gap: 44px; padding: 32px 0 64px; }
+      .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .fact:nth-child(3) { padding-left: 0; border-left: 0; }
+      .fact:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .cast { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; row-gap: 28px; border-top: 0; }
+      .actor, .actor + .actor { padding: 20px 0 0; }
+      .route li { grid-template-columns: 5em minmax(0, 1fr); gap: 4px 16px; }
+      .route .ask, .route .how { grid-column: 1 / -1; }
+      .seven { grid-template-columns: minmax(0, 1fr); }
+      .prep { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+      .materials { grid-template-columns: minmax(0, 1fr); }
+      .speaker { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      .sec { padding-top: 80px; }
+    }
+
+    @media (max-width: 560px) {
+      .cast { grid-template-columns: minmax(0, 1fr); }
+      .xchg-body { padding: 20px 18px 18px; }
+      .xchg-foot { padding: 0 18px 18px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <nav class="top" aria-label="頁面導覽">
+      <a class="top-home" href="../../">appleboy / slides</a>
+      <span>Hello World Dev Conference 2026｜工作坊</span>
+    </nav>
+
+    <!-- ── HERO ── -->
+    <header class="hero">
+      <div>
+        <p class="hero-event">HWDC 2026　2026.10.14　13:30 – 15:00</p>
+        <h1 class="hero-title">
+          <span>讓 AI Agent、</span>
+          <span>MCP Server、CLI</span>
+          <span>安全登入</span>
+        </h1>
+        <p class="hero-desc">MCP OAuth 2.0 Workshop。從一支沒有任何認證、誰都能呼叫的 MCP Server 出發，一關一關補上授權：401 挑戰、Protected Resource Metadata、Authorization Code + PKCE、JWT 驗證、scope 與 audience，最後交給 Kong Gateway 集中守入口。</p>
+        <div class="actions">
+          <a class="btn btn-solid" href="workshop-zh.html">開啟投影片</a>
+          <a class="btn btn-line" href="https://github.com/go-training/mcp-oauth2-workshop" target="_blank" rel="noopener">工作坊 Repo</a>
+        </div>
+      </div>
+
+      <!-- Signature: step through the HTTP exchange that each lab adds -->
+      <div class="xchg" id="xchg">
+        <ul class="xchg-steps" role="tablist" aria-label="工作坊每一關的 HTTP 請求">
+          <li><button type="button" role="tab" aria-selected="true" aria-controls="xchg-panel" data-step="0">01</button></li>
+          <li><button type="button" role="tab" aria-selected="false" aria-controls="xchg-panel" data-step="1">02</button></li>
+          <li><button type="button" role="tab" aria-selected="false" aria-controls="xchg-panel" data-step="2">03</button></li>
+          <li><button type="button" role="tab" aria-selected="false" aria-controls="xchg-panel" data-step="3">04</button></li>
+          <li><button type="button" role="tab" aria-selected="false" aria-controls="xchg-panel" data-step="4">06</button></li>
+        </ul>
+        <div class="xchg-body" id="xchg-panel" role="tabpanel" aria-live="polite"></div>
+        <div class="xchg-foot">
+          <span class="xchg-count" id="xchg-count">Lab 01</span>
+          <button class="xchg-next" id="xchg-next" type="button">下一關</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── FACTS ── -->
+    <dl class="facts">
+      <div class="fact"><dt>活動</dt><dd>Hello World Dev Conference 2026</dd></div>
+      <div class="fact"><dt>時間</dt><dd>2026.10.14　13:30 – 15:00</dd></div>
+      <div class="fact"><dt>形式</dt><dd>90 分鐘實機操作</dd></div>
+      <div class="fact"><dt>規範版本</dt><dd>MCP Authorization 2026-07-28</dd></div>
+    </dl>
+
+    <main>
+
+      <!-- ── CAST ── -->
+      <section class="sec" aria-labelledby="cast-title">
+        <h2 class="sec-title" id="cast-title">一次授權，四個參與者</h2>
+        <p class="sec-lead">MCP 授權規格的方向是：把 MCP Server 視為 OAuth 的 Resource Server。投影片裡每個角色都有固定的顏色，這一頁也一樣。</p>
+        <div class="cast">
+          <div class="actor client">
+            <span class="kind">Client</span>
+            <h3>Claude Code、Codex CLI</h3>
+            <p>代表你登入、保管 Token，每次呼叫 MCP 都帶上它。</p>
+          </div>
+          <div class="actor browser">
+            <span class="kind">Browser</span>
+            <h3>瀏覽器（你）</h3>
+            <p>登入帳號，確認這個 App 要拿哪些權限，按下允許。</p>
+          </div>
+          <div class="actor signet">
+            <span class="kind">Authorization Server</span>
+            <h3>Signet</h3>
+            <p>驗證身分、徵得同意、簽發 Token，公開驗簽用的 JWKS。</p>
+          </div>
+          <div class="actor server">
+            <span class="kind">Resource Server</span>
+            <h3>MCP Server</h3>
+            <p>持有工具與資料。驗 Token，決定放不放行。</p>
+          </div>
+        </div>
+        <p class="cast-note">Client ID 是公開識別，不是密碼。CLI 屬於 public Client，沒有 client secret，所以要靠 PKCE 保護登入流程。</p>
+      </section>
+
+      <!-- ── ROUTE ── -->
+      <section class="sec" aria-labelledby="route-title">
+        <h2 class="sec-title" id="route-title">每一關回答一個問題</h2>
+        <p class="sec-lead">現場提供已架好的 OAuth 2.0 / OpenID Connect 認證閘道，你的時間全花在自己筆電上的 MCP Server 與 Client。</p>
+        <ol class="route">
+          <li>
+            <span class="lab">Lab 01</span><span class="min">10 分</span>
+            <span class="ask">沒有授權會怎樣？</span>
+            <span class="how">任何人都能呼叫所有工具，分不出讀取與寫入。</span>
+          </li>
+          <li>
+            <span class="lab">Lab 02</span><span class="min">15 分</span>
+            <span class="ask">Client 怎麼知道去哪登入？</span>
+            <span class="how"><code>401</code> 加 <code>WWW-Authenticate</code>，再由 PRM（RFC 9728）與 AS metadata（RFC 8414）帶路。</span>
+          </li>
+          <li>
+            <span class="lab">Lab 03</span><span class="min">25 分</span>
+            <span class="ask">怎麼證明你是誰？</span>
+            <span class="how">Authorization Code + PKCE（RFC 7636），Server 用 JWKS 驗 JWT 的簽章、iss、aud、exp、type。</span>
+          </li>
+          <li>
+            <span class="lab">Lab 04</span><span class="min">20 分</span>
+            <span class="ask">你能做什麼、能去哪？</span>
+            <span class="how">scope 分讀寫，audience（RFC 8707）讓 A 的 Token 打不進 B，subject 隔離每個人的資料。</span>
+          </li>
+          <li>
+            <span class="lab">Lab 06</span><span class="min">10 分</span>
+            <span class="ask">多個服務怎麼共用入口？</span>
+            <span class="how">Kong + mcp-oauth2 plugin 集中驗 Token，工具與資料權限仍留在服務。</span>
+          </li>
+          <li class="optional">
+            <span class="lab">Lab 05</span><span class="min">課後選修</span>
+            <span class="ask">撤銷後會立刻失效嗎？</span>
+            <span class="how">離線驗 JWT 不會即時知道撤銷；需要時再設計 introspection 或撤銷傳播。</span>
+          </li>
+        </ol>
+        <p class="route-note">程式是完整可執行的完成版。重點不是手刻 OAuth，而是看懂每個請求、每一次拒絕代表什麼。</p>
+      </section>
+
+      <!-- ── SEVEN THINGS ── -->
+      <section class="sec" aria-labelledby="seven-title">
+        <h2 class="sec-title" id="seven-title">帶走這七件事</h2>
+        <p class="sec-lead">把授權伺服器換成公司既有的 Keycloak、Auth0 或 Microsoft Entra ID，同一套設計原則與程式碼仍然適用。</p>
+        <ul class="seven">
+          <li><b>401 + PRM</b> 告訴 Client 去哪登入；Server 不代替 Client 登入</li>
+          <li>public Client 沒有 secret，靠 <b>PKCE</b> 保護授權碼</li>
+          <li>每次呼叫 MCP 都要帶 <b>Access Token</b></li>
+          <li>Server 驗 <b>簽章、iss、aud、exp、type</b></li>
+          <li><b>401</b> 是 Token 不被接受；<b>403</b> 是權限不夠</li>
+          <li><b>Gateway</b> 集中入口驗證，工具與資料權限仍留在服務</li>
+          <li><b>撤銷</b> 不等於立即失效，離線驗證要另外處理</li>
+        </ul>
+      </section>
+
+      <!-- ── PREP ── -->
+      <section class="sec" aria-labelledby="prep-title">
+        <h2 class="sec-title" id="prep-title">事前準備</h2>
+        <p class="sec-lead">不需要事先熟悉 OAuth 或 MCP，會基本的 HTTP 與終端機操作就夠了。</p>
+        <div class="prep">
+          <ul class="prep-list">
+            <li>一台可執行 Docker / Docker Compose 的筆電（macOS、Linux 或 Windows WSL2）</li>
+            <li><span>已安裝 <code>git</code>、<code>curl</code>、<code>jq</code> 與任一終端機</span></li>
+            <li>依課前文件準備 MCP Server 與 MCP Client 範例的執行環境</li>
+            <li>事先拉取工作坊映像檔，避免現場網路壅塞</li>
+          </ul>
+          <div class="prep-aside">
+            <h3>現場有備援</h3>
+            <p>會提供預載映像檔的隨身碟，並安排助教協助處理環境問題。詳細 setup 文件請見工作坊 Repo。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── MATERIALS ── -->
+      <section class="sec" aria-labelledby="materials-title">
+        <h2 class="sec-title" id="materials-title">投影片與教材</h2>
+        <p class="sec-lead">投影片含每一關的時序圖，可用鍵盤左右鍵翻頁。</p>
+        <div class="materials">
+          <a class="deck" href="workshop-zh.html">
+            <div class="deck-cover">
+              <strong>MCP OAuth 2.0 Workshop</strong>
+              <small>讓 AI Agent、MCP Server 與 CLI 安全登入</small>
+              <span class="deck-roles" aria-hidden="true">
+                <span class="role client">Client</span>
+                <span class="role signet">Signet</span>
+                <span class="role server">MCP Server</span>
+                <span class="role kong">Kong</span>
+              </span>
+            </div>
+            <div class="deck-info">
+              <h3>中文投影片</h3>
+              <span class="deck-go">開啟投影片</span>
+            </div>
+          </a>
+          <ul class="refs">
+            <li>
+              <span class="what">工作坊教材與程式碼</span>
+              <a href="https://github.com/go-training/mcp-oauth2-workshop" target="_blank" rel="noopener">github.com/go-training/mcp-oauth2-workshop</a>
+            </li>
+            <li>
+              <span class="what">MCP Authorization 規範</span>
+              <a href="https://modelcontextprotocol.io/specification/2026-07-28/basic/authorization" target="_blank" rel="noopener">modelcontextprotocol.io</a>
+            </li>
+            <li>
+              <span class="what">Kong mcp-oauth2 plugin</span>
+              <a href="https://github.com/go-signet/kong-mcp-oauth2" target="_blank" rel="noopener">github.com/go-signet/kong-mcp-oauth2</a>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ── SPEAKER ── -->
+      <section class="sec" aria-labelledby="speaker-title">
+        <h2 class="sec-title" id="speaker-title">講者</h2>
+        <div class="speaker">
+          <div class="speaker-mark" aria-hidden="true">吳</div>
+          <div>
+            <div class="speaker-name">吳柏毅<span>Appleboy</span></div>
+            <div class="speaker-role">聯發科技 後端架構工程師</div>
+            <p class="speaker-bio">負責公司內部 Technology Platform 的開發與維運，以 Go 建構微服務，並導入 DevOps 與自動化流程。長期貢獻開源專案，目前專注於 AI 工具導入，探索 AI 如何加速軟體團隊的開發流程與決策效率。</p>
+            <div class="speaker-links">
+              <a href="https://github.com/appleboy" target="_blank" rel="noopener">GitHub</a>
+              <a href="https://speakerdeck.com/appleboy" target="_blank" rel="noopener">Speaker Deck</a>
+              <a href="../1014-hwdc-talk/">同場演講：誰能用、用多久、出事能不能即時關掉？</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <span>Hello World Dev Conference 2026｜MCP OAuth 2.0 Workshop</span>
+      <a href="https://2026.helloworld.dev/" target="_blank" rel="noopener">2026.helloworld.dev</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const arrow = '<svg viewBox="0 0 26 12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 6h22M18 1l5 5-5 5"/></svg>';
+      const route = (from, to) => `<div class="xchg-route"><span class="role ${from[0]}">${from[1]}</span>${arrow}<span class="role ${to[0]}">${to[1]}</span></div>`;
+      const C = ['client', 'Client'], S = ['server', 'MCP Server'], A = ['signet', 'Signet'], K = ['kong', 'Kong'];
+
+      const steps = [
+        {
+          lab: 'Lab 01',
+          q: '沒有授權：誰都能寫入',
+          body: route(C, S) +
+            '<pre>POST /mcp\ntools/call  create_note\n\n<span class="status ok">200 OK</span></pre>',
+          why: 'Server 不檢查任何東西。能連到這個 port 的程式，就能用全部工具。'
+        },
+        {
+          lab: 'Lab 02',
+          q: '先被擋下，再被帶到登入頁',
+          body: route(C, S) +
+            '<pre>GET /mcp\n\n<span class="status deny">401 Unauthorized</span>\nWWW-Authenticate: Bearer\n  resource_metadata=".../.well-known/\n  oauth-protected-resource/mcp"</pre>' +
+            route(C, S) +
+            '<pre>GET /.well-known/oauth-protected-resource/mcp\n\n<span class="status ok">200</span> { "resource": "http://localhost:8000/mcp",\n       "authorization_servers": ["https://signet.wu-boy.com"] }</pre>',
+          why: 'PRM 是 MCP Server 自己的端點：我是哪個資源、信任哪個 Authorization Server。'
+        },
+        {
+          lab: 'Lab 03',
+          q: '用 PKCE 換 Token，帶 Token 呼叫',
+          body: route(C, A) +
+            '<pre>POST /oauth/token\ngrant_type=authorization_code\ncode=…&amp;code_verifier=…\n\n<span class="status ok">200</span> { "access_token": "eyJ…", "token_type": "Bearer" }</pre>' +
+            route(C, S) +
+            '<pre>GET /mcp  Authorization: Bearer eyJ…\ntools/call  whoami\n\n<span class="status ok">200 OK</span></pre>',
+          why: '攔截到 code 的人沒有 verifier，換不到 Token。Server 用 JWKS 驗簽章、iss、aud、exp、type。'
+        },
+        {
+          lab: 'Lab 04',
+          q: '讀得到，不代表寫得進去',
+          body: route(C, S) +
+            '<pre>POST /mcp  Bearer (scope: notes:read)\ntools/call  create_note\n\n<span class="status deny">403 Forbidden</span>\nWWW-Authenticate: Bearer\n  error="insufficient_scope", scope="notes:write"</pre>' +
+            route(C, ['server', 'MCP Server B']) +
+            '<pre>POST /mcp  Bearer (aud: Server A)\n\n<span class="status deny">401 Unauthorized</span>  aud 不符</pre>',
+          why: '401 是 Token 不被接受；403 是身分確定、但權限不夠。A 的 Token 打不進 B。'
+        },
+        {
+          lab: 'Lab 06',
+          q: '入口交給 Gateway，權限留在服務',
+          body: route(C, K) +
+            '<pre>GET /mcp  Authorization: Bearer eyJ…\n驗 JWT：簽章、iss、aud、exp、scope</pre>' +
+            route(K, S) +
+            '<pre>forward\nX-MCP-Subject: …\nX-MCP-Scope: notes:read\n\n<span class="status ok">200 OK</span></pre>',
+          why: 'backend 不對外發布 port，只送一個 X-MCP-Subject header 騙不過它；create_note 仍要求 notes:write。'
+        }
+      ];
+
+      const tabs = [...document.querySelectorAll('.xchg-steps button')];
+      const panel = document.getElementById('xchg-panel');
+      const count = document.getElementById('xchg-count');
+      const next = document.getElementById('xchg-next');
+      let current = 0;
+
+      const show = (i) => {
+        current = i;
+        const s = steps[i];
+        panel.innerHTML = `<p class="xchg-q">${s.q}</p>${s.body}<p class="xchg-why">${s.why}</p>`;
+        tabs.forEach((t, j) => {
+          t.setAttribute('aria-selected', String(j === i));
+          t.tabIndex = j === i ? 0 : -1;
+        });
+        count.textContent = `${s.lab}（${i + 1} / ${steps.length}）`;
+        next.textContent = i === steps.length - 1 ? '從頭再看一次' : '下一關';
+      };
+
+      tabs.forEach((t, i) => {
+        t.addEventListener('click', () => show(i));
+        t.addEventListener('keydown', (e) => {
+          if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+          const j = (current + (e.key === 'ArrowRight' ? 1 : -1) + steps.length) % steps.length;
+          show(j);
+          tabs[j].focus();
+        });
+      });
+
+      next.addEventListener('click', () => show((current + 1) % steps.length));
+
+      show(0);
+    })();
+  </script>
+</body>
+</html>
